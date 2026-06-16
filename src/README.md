@@ -36,13 +36,22 @@ questões sem mexer no código.
 ## 📂 Estrutura do projeto
 
 ```text
-quiz-ihc/
-├─ index.html      # estrutura das telas
-├─ style.css       # estilos (responsivo)
-├─ app.js          # lógica do quiz
+src/
+├─ index.html      # tela inicial (home)
+├─ index.js        # lógica da tela inicial
+├─ quiz.html       # modo Quiz (uma questão por vez) + resultado
+├─ quiz.js         # lógica do modo Quiz
+├─ list.html       # modo Lista (todas em coluna, com filtros)
+├─ list.js         # lógica do modo Lista
+├─ common.js       # compartilhado: estado, dados, persistência, helpers
+├─ style.css       # estilos (responsivo, usado pelas 3 páginas)
 ├─ questions.json  # banco de questões
 └─ README.md
 ```
+
+> Cada página (`index`, `quiz`, `list`) carrega o `common.js` primeiro e
+> depois o seu próprio `.js`. O progresso é compartilhado entre as páginas
+> porque fica salvo no `localStorage`.
 
 ## ▶️ Como rodar localmente
 

@@ -327,6 +327,13 @@ h2 { font-size: 1.25rem; }
 .list-empty { text-align: center; padding: 32px 0; }
 .list-container { display: flex; flex-direction: column; gap: 16px; }
 
+.list-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.list-footer .actions { margin-top: 4px; }
+
 /* Cartão na lista (questão + alternativas + ver resposta) */
 .list-card .statement { font-size: 1.05rem; }
 .list-card-actions { margin-top: 6px; }
