@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz IHC - Autoavaliação</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- ===== Barra superior: troca de modo (Quiz / Lista) ===== -->
+    <div id="topbar" class="topbar hidden">
+      <div class="tabs">
+        <button id="tab-quiz" class="tab">Quiz</button>
+        <button id="tab-list" class="tab">Lista</button>
+      </div>
+      <button id="btn-home" class="btn btn-ghost btn-sm">Início</button>
+    </div>
+
+    <!-- ========================= TELA INICIAL ========================= -->
+    <section id="screen-start" class="screen">
+      <h1 id="start-title">Carregando…</h1>
+      <p id="start-description" class="muted"></p>
+      <p id="start-resume" class="resume-note hidden">
+        Encontramos um progresso salvo. Você pode continuar de onde parou.
+      </p>
+
+      <div class="actions actions-center">
+        <button id="btn-start" class="btn btn-primary btn-lg">Começar quiz</button>
+        <button id="btn-open-list" class="btn btn-lg">Ver todas em lista</button>
+        <button id="btn-resume" class="btn btn-lg hidden">Continuar</button>
+      </div>
+
+      <div class="actions actions-center">
+        <button id="btn-clear" class="btn btn-ghost hidden">🗑️ Limpar progresso salvo</button>
+      </div>
+
+      <!-- Upload de um questions.json -->
+      <div class="upload-box">
+        <p class="muted upload-label">Carregar outro banco de questões (.json):</p>
+        <input type="file" id="file-json" accept="application/json,.json" />
+        <p class="muted upload-hint" id="file-status"></p>
+      </div>
+    </section>
+
+    <!-- ========================= TELA DO QUIZ ========================= -->
+    <section id="screen-quiz" class="screen hidden">
+      <header class="quiz-header">
+        <div class="progress-row">
+          <span id="progress-label" class="muted">Questão 1 de 100</span>
+          <label class="checkbox-inline hidden" id="only-wrong-wrap">
+            <input type="checkbox" id="chk-only-wrong" />
+            Mostrar apenas erradas
+          </label>
+        </div>
+        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+      </header>
+
+      <article class="card">
+        <p id="q-topic" class="topic-tag"></p>
+        <h2 id="q-statement" class="statement"></h2>
+        <ul id="q-options" class="options"></ul>
+        <p id="q-feedback" class="feedback hidden"></p>
+      </article>
+
+      <nav class="actions">
+        <button id="btn-prev" class="btn">← Anterior</button>
+        <button id="btn-next" class="btn">Próxima →</button>
+        <button id="btn-correct" class="btn btn-primary">Corrigir</button>
+        <button id="btn-restart" class="btn btn-ghost">Reiniciar</button>
+      </nav>
+    </section>
+
+    <!-- ========================= TELA EM LISTA ========================= -->
+    <section id="screen-list" class="screen hidden">
+      <div class="list-filters">
+        <button class="chip is-active" data-filter="all">Todas <span id="cnt-all">0</span></button>
+        <button class="chip" data-filter="answered">Respondidas <span id="cnt-answered">0</span></button>
+        <button class="chip" data-filter="correct">Acertadas <span id="cnt-correct">0</span></button>
+        <button class="chip" data-filter="wrong">Erradas <span id="cnt-wrong">0</span></button>
+        <button class="chip" data-filter="unanswered">Não respondidas <span id="cnt-unanswered">0</span></button>
+      </div>
+      <p id="list-empty" class="muted list-empty hidden">Nenhuma questão neste filtro.</p>
+      <div id="list-container" class="list-container"></div>
+    </section>
+
+    <!-- ========================= TELA FINAL ========================= -->
+    <section id="screen-result" class="screen hidden">
+      <h1>Resultado</h1>
+
+      <div class="score-grid">
+        <div class="score-box"><span id="score-correct" class="score-num">0</span><span class="muted">Acertos</span></div>
+        <div class="score-box"><span id="score-wrong" class="score-num">0</span><span class="muted">Erros</span></div>
+        <div class="score-box"><span id="score-pct" class="score-num">0%</span><span class="muted">Aproveitamento</span></div>
+      </div>
+
+      <h2 class="wrong-title" id="wrong-title">Questões erradas</h2>
+      <div id="wrong-list" class="wrong-list"></div>
+
+      <nav class="actions actions-center">
+        <button id="btn-review" class="btn btn-primary">Revisar questões</button>
+        <button id="btn-redo-wrong" class="btn">Refazer apenas erradas</button>
+        <button id="btn-restart-2" class="btn btn-ghost">Reiniciar tudo</button>
+      </nav>
+    </section>
+
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# PDF de origem das questões (não precisa ser publicado).
+# Remova esta linha se quiser versioná-lo no repositório.
+*.pdf
+
+# Lixo de sistema operacional / editor
+.DS_Store
+Thumbs.db
+.vscode/
