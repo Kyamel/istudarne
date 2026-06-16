@@ -17,6 +17,13 @@
     $("start-resume").classList.toggle("hidden", !hasProgress);
     $("btn-resume").classList.toggle("hidden", !hasProgress);
     $("btn-clear").classList.toggle("hidden", !hasProgress);
+
+    // Indica qual banco está em uso (padrão ou enviado).
+    const custom = Quiz.usesUploadedData();
+    $("bank-status").textContent = custom
+      ? "Banco em uso: enviado por você (" + Quiz.QUESTIONS.length + " questões)."
+      : "Banco em uso: padrão (" + Quiz.QUESTIONS.length + " questões).";
+    $("btn-default-bank").classList.toggle("hidden", !custom);
   }
 
   // "Começar quiz": abre o Quiz com TODAS as questões, sem apagar nada.
@@ -66,8 +73,8 @@
             "Deseja continuar?");
           if (!ok) { $("file-json").value = ""; return; }
         }
-        Quiz.applyData(data);
-        Quiz.resetAll();
+        Quiz.setUploadedData(data); // aplica E persiste o banco enviado
+        Quiz.resetAll();            // zera o progresso para o novo banco
         $("file-status").textContent =
           "✓ Carregado: " + Quiz.QUESTIONS.length + " questões de " + file.name;
         render();
@@ -78,12 +85,25 @@
     reader.readAsText(file, "utf-8");
   }
 
+  // Descarta o banco enviado e volta ao questions.json padrão.
+  function useDefaultBank() {
+    const ok = confirm(
+      "Voltar ao banco padrão\n\n" +
+      "Isto vai descartar o banco de questões que você enviou e também o " +
+      "progresso atual, voltando ao questions.json padrão.\n\nDeseja continuar?");
+    if (!ok) return;
+    Quiz.clearData();
+    Quiz.clear();
+    location.reload(); // recarrega para buscar o questions.json padrão
+  }
+
   function bind() {
     $("btn-start").addEventListener("click", goQuizAll);
     $("btn-open-list").addEventListener("click", goList);
     $("btn-resume").addEventListener("click", resume);
     $("btn-clear").addEventListener("click", clearProgress);
     $("file-json").addEventListener("change", handleFileUpload);
+    $("btn-default-bank").addEventListener("click", useDefaultBank);
   }
 
   async function init() {

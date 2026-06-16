@@ -14,7 +14,8 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "quiz-ihc-progress-v1";
+  const STORAGE_KEY = "quiz-ihc-progress-v1"; // progresso (respostas etc.)
+  const DATA_KEY = "quiz-ihc-data-v1";        // banco enviado pelo usuário
 
   let DATA = null;
   let QUESTIONS = [];
@@ -57,6 +58,38 @@
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
   }
 
+  // --- banco de questões enviado pelo usuário (persistido à parte) ---
+
+  function saveData() {
+    try { localStorage.setItem(DATA_KEY, JSON.stringify(DATA)); }
+    catch (e) { console.warn("Não foi possível salvar o banco enviado:", e); }
+  }
+
+  function loadStoredData() {
+    try {
+      const raw = localStorage.getItem(DATA_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.questions) && parsed.questions.length) {
+        return parsed;
+      }
+    } catch (e) { console.warn("Banco enviado inválido:", e); }
+    return null;
+  }
+
+  function clearData() {
+    try { localStorage.removeItem(DATA_KEY); } catch (e) {}
+  }
+
+  // Aplica e persiste um banco enviado pelo usuário (uploads).
+  function setUploadedData(data) {
+    applyData(data);
+    saveData();
+  }
+
+  // Volta ao banco padrão (questions.json) descartando o enviado.
+  function usesUploadedData() { return !!loadStoredData(); }
+
   function resetAll() {
     clear();
     state = createEmptyState();
@@ -75,16 +108,22 @@
     QUESTIONS.forEach((q) => { BY_ID[q.id] = q; });
   }
 
-  // Carrega o questions.json e recupera o progresso salvo.
+  // Carrega o banco de questões e recupera o progresso salvo.
+  // Prioridade: banco enviado pelo usuário (localStorage) > questions.json.
   // Retorna { ok: true } ou { ok: false, error }.
   async function load() {
-    try {
-      const res = await fetch("./questions.json");
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      applyData(await res.json());
-    } catch (e) {
-      console.error(e);
-      return { ok: false, error: e };
+    const stored = loadStoredData();
+    if (stored) {
+      applyData(stored);
+    } else {
+      try {
+        const res = await fetch("./questions.json");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        applyData(await res.json());
+      } catch (e) {
+        console.error(e);
+        return { ok: false, error: e };
+      }
     }
 
     const saved = loadSaved();
@@ -204,6 +243,7 @@
     get QUESTIONS() { return QUESTIONS; },
     get BY_ID() { return BY_ID; },
     createEmptyState, save, clear, resetAll, applyData, load,
+    setUploadedData, clearData, usesUploadedData,
     isAnswered, isCorrect, isWrong, countWrong, prepareRedoWrong, confirmWipe,
     escapeHtml, buildOptionEl, fillFeedback,
   };
