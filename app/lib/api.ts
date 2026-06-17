@@ -69,7 +69,7 @@ async function request<T>(url: string, schema: z.ZodType<T>, init?: RequestInit)
 	});
 
 	if (!response.ok) {
-		let message = `Falha na requisição: ${response.status}`;
+		let message = `Request failed: ${response.status}`;
 		const text = await response.text();
 		if (text) {
 			try {
@@ -85,7 +85,7 @@ async function request<T>(url: string, schema: z.ZodType<T>, init?: RequestInit)
 	const data = await response.json();
 	const parsed = schema.safeParse(data);
 	if (!parsed.success) {
-		throw new ApiError("Resposta inválida da API.", response.status);
+		throw new ApiError("Invalid API response.", response.status);
 	}
 	return parsed.data;
 }

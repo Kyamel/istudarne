@@ -4,8 +4,8 @@ import type { HonoEnv } from "../env";
 import { getSessionToken } from "../http/cookies";
 
 /**
- * Abre a conexão e monta o container de DI uma vez por requisição, além de
- * resolver o usuário autenticado a partir do cookie de sessão.
+ * Opens the database connection and builds the DI container once per request,
+ * then resolves the authenticated user from the session cookie.
  */
 export const diMiddleware: MiddlewareHandler<HonoEnv> = async (c, next) => {
 	const container = createContainer(c.env);

@@ -16,7 +16,7 @@ export async function recordAnswer(
 		.from(questions)
 		.where(eq(questions.id, input.questionId))
 		.limit(1);
-	if (!question) throw new Error("Questão não encontrada.");
+	if (!question) throw new Error("Question not found.");
 
 	const isCorrect = question.answer === input.selectedOption;
 

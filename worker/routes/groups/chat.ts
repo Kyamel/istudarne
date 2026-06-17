@@ -6,10 +6,10 @@ export function registerGroupChat(app: App) {
 	app.openapi(groupChatRoute, async (c) => {
 		const { groupId } = c.req.valid("param");
 		const user = currentUser(c);
-		if (!user) return c.text("Faça login para entrar no chat.", 401);
+		if (!user) return c.text("Please sign in to join the chat.", 401);
 
 		const role = await container(c).services.group.membership(groupId, user.id);
-		if (!role) return c.text("Você não participa deste grupo.", 403);
+		if (!role) return c.text("You are not a member of this group.", 403);
 
 		const url = new URL(c.req.url);
 		url.searchParams.set("uid", user.id);

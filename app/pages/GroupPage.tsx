@@ -59,7 +59,7 @@ export default function GroupPage() {
 					setMessages((current) => [...current, payload.message]);
 				}
 			} catch {
-				// ignora payloads malformados
+				// Ignore malformed payloads.
 			}
 		});
 

@@ -8,9 +8,9 @@ import { createProfileService } from "./services/profileService";
 import { createQuizService } from "./services/quizService";
 
 /**
- * Container de injeção de dependências montado uma única vez por requisição.
- * A conexão Drizzle é aberta aqui e compartilhada por todos os repositórios e
- * serviços — nenhum handler deve recriar a conexão.
+ * Dependency injection container built once per request. The Drizzle connection
+ * is opened here and shared by all repositories and services, so handlers do
+ * not recreate the connection.
  */
 export function createContainer(env: Env) {
 	const db = createDatabase(env.DB);

@@ -3,7 +3,7 @@ import type { AuthUser } from "../domain/types";
 import { conflict, unauthorized } from "../errors";
 import type { UserRepository } from "../repositories/userRepository";
 
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 dias
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 export type RegisterInput = {
 	email: string;
@@ -29,10 +29,10 @@ export function createAuthService(users: UserRepository) {
 	return {
 		async register(input: RegisterInput): Promise<{ user: AuthUser; token: string }> {
 			if (await users.getByEmail(input.email)) {
-				throw conflict("Este email já está em uso.");
+				throw conflict("This email is already in use.");
 			}
 			if (await users.getByUsername(input.username)) {
-				throw conflict("Este nome de usuário já existe.");
+				throw conflict("This username is already taken.");
 			}
 
 			const passwordHash = await hashPassword(input.password);
@@ -59,7 +59,7 @@ export function createAuthService(users: UserRepository) {
 		async login(email: string, password: string): Promise<{ user: AuthUser; token: string }> {
 			const user = await users.getByEmail(email);
 			if (!user || !(await verifyPassword(password, user.passwordHash))) {
-				throw unauthorized("Email ou senha incorretos.");
+				throw unauthorized("Incorrect email or password.");
 			}
 			return {
 				user: {

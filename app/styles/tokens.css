@@ -1,5 +1,5 @@
-/* Tokens de design (cores, sombras, raios). Único lugar onde os valores vivem.
-   Importado por app.css e por cada arquivo de módulo CSS. */
+/* Design tokens (colors, shadows, radii). This is the single source of truth.
+   Imported by app.css and each CSS module file. */
 
 :root {
 	--bg: #eef1ec;

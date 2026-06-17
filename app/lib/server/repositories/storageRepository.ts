@@ -1,4 +1,4 @@
-/** Adaptador de armazenamento de objetos (R2) para arquivos originais de quiz. */
+/** Object storage adapter (R2) for original quiz files. */
 export function createStorageRepository(bucket: R2Bucket) {
 	return {
 		putJson: (key: string, value: unknown) =>

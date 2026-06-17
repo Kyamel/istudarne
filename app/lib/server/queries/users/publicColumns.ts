@@ -1,6 +1,6 @@
 import { users } from "../../db/schema";
 
-/** Colunas seguras de usuário (sem hash de senha). */
+/** Safe user columns, excluding the password hash. */
 export const publicUserColumns = {
 	id: users.id,
 	email: users.email,

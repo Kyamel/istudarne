@@ -5,7 +5,7 @@ import type { GroupRepository } from "../repositories/groupRepository";
 export function createGroupService(groups: GroupRepository) {
 	async function assertMember(groupId: string, userId: string) {
 		const role = await groups.membership(groupId, userId);
-		if (!role) throw forbidden("Você não participa deste grupo.");
+		if (!role) throw forbidden("You are not a member of this group.");
 		return role;
 	}
 
@@ -21,9 +21,9 @@ export function createGroupService(groups: GroupRepository) {
 
 		async detail(groupId: string, viewerId: string) {
 			const detail = await groups.detail(groupId, viewerId);
-			if (!detail) throw notFound("Grupo não encontrado.");
+			if (!detail) throw notFound("Group not found.");
 			if (detail.visibility !== "public" && !detail.role) {
-				throw forbidden("Grupo privado.");
+				throw forbidden("Private group.");
 			}
 			return detail;
 		},

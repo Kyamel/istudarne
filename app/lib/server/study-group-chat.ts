@@ -25,7 +25,7 @@ export class StudyGroupChat implements DurableObject {
 		const segments = url.pathname.split("/");
 		const groupId = segments[segments.indexOf("groups") + 1] ?? "";
 		const userId = url.searchParams.get("uid") ?? "anon";
-		const displayName = url.searchParams.get("name") ?? "Anônimo";
+		const displayName = url.searchParams.get("name") ?? "Anonymous";
 
 		const [client, server] = Object.values(new WebSocketPair());
 		const session: ChatSession = { socket: server, userId, displayName };
@@ -51,7 +51,7 @@ export class StudyGroupChat implements DurableObject {
 			try {
 				await this.groups.addMessage({ id: message.id, groupId, senderId: userId, body });
 			} catch {
-				// Mantém o broadcast mesmo se a persistência falhar.
+				// Keep broadcasting even if persistence fails.
 			}
 
 			this.broadcast({ type: "message", message });

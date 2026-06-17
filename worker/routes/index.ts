@@ -26,7 +26,7 @@ import { registerPublishQuiz, registerUnpublishQuiz } from "./quizzes/visibility
 import { registerFollow, registerUnfollow } from "./users/follow";
 import { registerProfile } from "./users/profile";
 
-/** Registra todas as rotas da API (uma função por arquivo de rota). */
+/** Registers all API routes (one route registration function per route file). */
 export function registerApiRoutes(app: App) {
 	registerHealth(app);
 
@@ -35,7 +35,7 @@ export function registerApiRoutes(app: App) {
 	registerLogout(app);
 	registerMe(app);
 
-	// Específicas antes das paramétricas para evitar colisão de rota.
+	// Specific routes must be registered before parametric routes to avoid route collisions.
 	registerSearchQuizzes(app);
 	registerUploadQuiz(app);
 	registerListMyQuizzes(app);

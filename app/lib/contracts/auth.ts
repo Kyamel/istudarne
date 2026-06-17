@@ -15,7 +15,7 @@ export const registerRequestSchema = z.object({
 		.string()
 		.min(3)
 		.max(24)
-		.regex(/^[a-z0-9_]+$/i, "Use apenas letras, números ou _."),
+		.regex(/^[a-z0-9_]+$/i, "Use only letters, numbers, or _."),
 	displayName: z.string().min(2).max(60),
 	password: z.string().min(8).max(128),
 });

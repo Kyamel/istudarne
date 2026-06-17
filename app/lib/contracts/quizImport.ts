@@ -29,7 +29,7 @@ export function parseUploadedQuiz(value: unknown) {
 	for (const [index, question] of quiz.questions.entries()) {
 		const optionIds = new Set(question.options.map((option) => option.id));
 		if (!optionIds.has(question.answer)) {
-			throw new Error(`Questão ${index + 1}: a resposta correta precisa existir nas alternativas.`);
+			throw new Error(`Question ${index + 1}: the correct answer must exist in the options.`);
 		}
 	}
 

@@ -3,7 +3,7 @@ import type { Database } from "../db/client";
 import { quizTags, quizzes, tags, users } from "../db/schema";
 import type { QuizSummary } from "../domain/types";
 
-/** Colunas reutilizadas para montar um QuizSummary com dados do dono. */
+/** Reusable columns for building a QuizSummary with owner data. */
 export const summaryColumns = {
 	id: quizzes.id,
 	title: quizzes.title,
@@ -15,7 +15,7 @@ export const summaryColumns = {
 	ownerDisplayName: users.displayName,
 };
 
-/** Anexa as tags de cada quiz em uma única consulta agregada. */
+/** Attaches each quiz's tags with one aggregated query. */
 export async function attachTags(
 	db: Database,
 	rows: Omit<QuizSummary, "tags">[],

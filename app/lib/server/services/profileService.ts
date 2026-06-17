@@ -5,21 +5,21 @@ import type { UserRepository } from "../repositories/userRepository";
 export function createProfileService(social: SocialRepository, users: UserRepository) {
 	async function resolveTarget(username: string) {
 		const target = await users.getByUsername(username);
-		if (!target) throw notFound("Usuário não encontrado.");
+		if (!target) throw notFound("User not found.");
 		return target;
 	}
 
 	return {
 		async get(username: string, viewerId: string | null) {
 			const profile = await social.profile(username, viewerId);
-			if (!profile) throw notFound("Usuário não encontrado.");
+			if (!profile) throw notFound("User not found.");
 			return profile;
 		},
 
 		async follow(viewerId: string, username: string) {
 			const target = await resolveTarget(username);
 			if (target.id === viewerId) {
-				throw badRequest("Você não pode seguir a si mesmo.");
+				throw badRequest("You cannot follow yourself.");
 			}
 			await social.follow(viewerId, target.id);
 		},

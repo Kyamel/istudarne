@@ -24,7 +24,7 @@ function normalizeTags(quiz: UploadedQuiz) {
 export function createQuizService(quizzes: QuizRepository, storage: StorageRepository) {
 	async function assertOwner(quizId: string, userId: string) {
 		const owner = await quizzes.owner(quizId);
-		if (!owner) throw notFound("Quiz não encontrado.");
+		if (!owner) throw notFound("Quiz not found.");
 		if (owner.ownerId !== userId) throw forbidden();
 		return owner;
 	}
@@ -68,9 +68,9 @@ export function createQuizService(quizzes: QuizRepository, storage: StorageRepos
 
 		async getForViewer(quizId: string, viewerId: string | null): Promise<QuizDetail> {
 			const detail = await quizzes.detail(quizId);
-			if (!detail) throw notFound("Quiz não encontrado.");
+			if (!detail) throw notFound("Quiz not found.");
 			if (detail.visibility === "private" && detail.ownerId !== viewerId) {
-				throw forbidden("Este quiz é privado.");
+				throw forbidden("This quiz is private.");
 			}
 			return detail;
 		},
@@ -79,7 +79,7 @@ export function createQuizService(quizzes: QuizRepository, storage: StorageRepos
 			await assertOwner(quizId, userId);
 			await quizzes.updateMetadata(quizId, patch);
 			const summary = await quizzes.summary(quizId);
-			if (!summary) throw notFound("Quiz não encontrado.");
+			if (!summary) throw notFound("Quiz not found.");
 			return summary;
 		},
 
@@ -92,15 +92,15 @@ export function createQuizService(quizzes: QuizRepository, storage: StorageRepos
 			await assertOwner(quizId, userId);
 			await quizzes.setVisibility(quizId, visibility);
 			const summary = await quizzes.summary(quizId);
-			if (!summary) throw notFound("Quiz não encontrado.");
+			if (!summary) throw notFound("Quiz not found.");
 			return summary;
 		},
 
 		async ensurePlayable(quizId: string, userId: string) {
 			const owner = await quizzes.owner(quizId);
-			if (!owner) throw notFound("Quiz não encontrado.");
+			if (!owner) throw notFound("Quiz not found.");
 			if (owner.visibility === "private" && owner.ownerId !== userId) {
-				throw forbidden("Este quiz é privado.");
+				throw forbidden("This quiz is private.");
 			}
 			return owner;
 		},

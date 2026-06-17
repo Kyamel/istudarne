@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
 const ErrorTextSchema = z.string().openapi({
-	example: "JSON inválido.",
+	example: "Invalid JSON.",
 });
 
 export const HealthResponseSchema = z
@@ -18,10 +18,10 @@ export const QuizSummarySchema = z
 			example: "bb73ccde-e174-4290-874a-a34f4fb6dc54",
 		}),
 		title: z.string().openapi({
-			example: "Banco de 100 Questões Objetivas - Interação Humano-Computador",
+			example: "100-question multiple-choice bank - Human-Computer Interaction",
 		}),
 		description: z.string().nullable().openapi({
-			example: "Questões de múltipla escolha com cinco alternativas.",
+			example: "Multiple-choice questions with five options.",
 		}),
 		visibility: z.enum(["private", "public", "unlisted"]).openapi({
 			example: "public",
@@ -29,9 +29,9 @@ export const QuizSummarySchema = z
 		questionCount: z.number().int().nonnegative().openapi({ example: 100 }),
 		playsCount: z.number().int().nonnegative().openapi({ example: 0 }),
 		ownerUsername: z.string().openapi({ example: "demo" }),
-		ownerDisplayName: z.string().openapi({ example: "Usuário Demo" }),
+		ownerDisplayName: z.string().openapi({ example: "Demo User" }),
 		tags: z.array(z.string()).openapi({
-			example: ["IHC", "Usabilidade"],
+			example: ["HCI", "Usability"],
 		}),
 	})
 	.openapi("QuizSummary");
@@ -58,7 +58,7 @@ export const SearchQuerySchema = z.object({
 				in: "query",
 			},
 			example: "IHC",
-			description: "Busca parcial pelo título do quiz.",
+			description: "Partial search by quiz title.",
 		}),
 });
 
@@ -68,7 +68,7 @@ export const GroupChatParamsSchema = z.object({
 			name: "groupId",
 			in: "path",
 		},
-		example: "grupo-ihc",
+		example: "hci-group",
 	}),
 });
 
@@ -77,11 +77,11 @@ export const UploadQuizFormSchema = z
 		file: z.any().openapi({
 			type: "string",
 			format: "binary",
-			description: "Arquivo JSON no formato de quiz do Istudarne.",
+			description: "JSON file in the Istudarne quiz format.",
 		}),
 		visibility: z.enum(["private", "public"]).optional().openapi({
 			example: "private",
-			description: "Visibilidade inicial do quiz importado.",
+			description: "Initial visibility for the imported quiz.",
 		}),
 	})
 	.openapi("UploadQuizForm");
@@ -93,7 +93,7 @@ export const healthRoute = createRoute({
 	summary: "Health check",
 	responses: {
 		200: {
-			description: "Status do Worker.",
+			description: "Worker status.",
 			content: {
 				"application/json": {
 					schema: HealthResponseSchema,
@@ -107,13 +107,13 @@ export const searchQuizzesRoute = createRoute({
 	method: "get",
 	path: "/api/quizzes/search",
 	tags: ["Quizzes"],
-	summary: "Pesquisar quizzes públicos",
+	summary: "Search public quizzes",
 	request: {
 		query: SearchQuerySchema,
 	},
 	responses: {
 		200: {
-			description: "Lista de quizzes públicos encontrados.",
+			description: "List of matching public quizzes.",
 			content: {
 				"application/json": {
 					schema: QuizSearchResponseSchema,
@@ -127,9 +127,9 @@ export const uploadQuizRoute = createRoute({
 	method: "post",
 	path: "/api/quizzes/upload",
 	tags: ["Quizzes"],
-	summary: "Importar quiz por JSON",
+	summary: "Import quiz from JSON",
 	description:
-		"Valida um arquivo JSON, salva o arquivo original no R2 e normaliza quiz, questões, alternativas e tags no D1.",
+		"Validates a JSON file, stores the original file in R2, and normalizes the quiz, questions, options, and tags in D1.",
 	request: {
 		body: {
 			required: true,
@@ -142,7 +142,7 @@ export const uploadQuizRoute = createRoute({
 	},
 	responses: {
 		201: {
-			description: "Quiz importado com sucesso.",
+			description: "Quiz imported successfully.",
 			content: {
 				"application/json": {
 					schema: QuizUploadResponseSchema,
@@ -150,7 +150,7 @@ export const uploadQuizRoute = createRoute({
 			},
 		},
 		400: {
-			description: "Arquivo ausente, JSON inválido ou schema inválido.",
+			description: "Missing file, invalid JSON, or invalid schema.",
 			content: {
 				"text/plain": {
 					schema: ErrorTextSchema,
@@ -158,21 +158,21 @@ export const uploadQuizRoute = createRoute({
 			},
 		},
 		401: {
-			description: "Usuário não autenticado.",
+			description: "Unauthenticated user.",
 			content: {
 				"text/plain": {
 					schema: ErrorTextSchema.openapi({
-						example: "Faça login para enviar um quiz.",
+						example: "Please sign in to upload a quiz.",
 					}),
 				},
 			},
 		},
 		413: {
-			description: "Arquivo maior que o limite aceito.",
+			description: "File exceeds the accepted limit.",
 			content: {
 				"text/plain": {
 					schema: ErrorTextSchema.openapi({
-						example: "O arquivo JSON deve ter no máximo 4 MB.",
+						example: "The JSON file must be at most 4 MB.",
 					}),
 				},
 			},
@@ -184,18 +184,18 @@ export const groupChatRoute = createRoute({
 	method: "get",
 	path: "/api/groups/{groupId}/chat",
 	tags: ["Groups"],
-	summary: "Conectar ao chat do grupo",
+	summary: "Connect to the group chat",
 	description:
-		"Endpoint WebSocket encaminhado para o Durable Object do grupo. Use header Upgrade: websocket.",
+		"WebSocket endpoint forwarded to the group's Durable Object. Use the Upgrade: websocket header.",
 	request: {
 		params: GroupChatParamsSchema,
 	},
 	responses: {
 		101: {
-			description: "Conexão WebSocket estabelecida.",
+			description: "WebSocket connection established.",
 		},
 		426: {
-			description: "A rota espera upgrade para WebSocket.",
+			description: "The route expects a WebSocket upgrade.",
 			content: {
 				"text/plain": {
 					schema: z.string().openapi({ example: "Expected WebSocket" }),
@@ -211,12 +211,12 @@ export const openApiDocument = {
 		title: "Istudarne API",
 		version: "0.1.0",
 		description:
-			"API serverless do Istudarne para quizzes, upload de JSON, busca pública e comunidade.",
+			"Istudarne serverless API for quizzes, JSON uploads, public search, and community features.",
 	},
 	servers: [
 		{
 			url: "/",
-			description: "Ambiente atual",
+			description: "Current environment",
 		},
 	],
 };

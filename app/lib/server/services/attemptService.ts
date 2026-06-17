@@ -7,7 +7,7 @@ export function createAttemptService(attempts: AttemptRepository, quizzes: QuizR
 	async function ownedAttempt(attemptId: string, userId: string) {
 		const attempt = await attempts.get(attemptId);
 		if (!attempt || attempt.userId !== userId) {
-			throw notFound("Tentativa não encontrada.");
+			throw notFound("Attempt not found.");
 		}
 		return attempt;
 	}
@@ -15,9 +15,9 @@ export function createAttemptService(attempts: AttemptRepository, quizzes: QuizR
 	return {
 		async start(quizId: string, userId: string, mode: AttemptMode) {
 			const owner = await quizzes.owner(quizId);
-			if (!owner) throw notFound("Quiz não encontrado.");
+			if (!owner) throw notFound("Quiz not found.");
 			if (owner.visibility === "private" && owner.ownerId !== userId) {
-				throw forbidden("Este quiz é privado.");
+				throw forbidden("This quiz is private.");
 			}
 			return attempts.create({ quizId, userId, mode });
 		},

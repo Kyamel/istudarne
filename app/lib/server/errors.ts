@@ -1,4 +1,4 @@
-/** Erro de domínio com status HTTP associado, mapeado pela camada de interface. */
+/** Domain error with an associated HTTP status, mapped by the interface layer. */
 export class AppError extends Error {
 	constructor(
 		readonly status: number,
@@ -9,8 +9,8 @@ export class AppError extends Error {
 	}
 }
 
-export const unauthorized = (message = "Faça login para continuar.") => new AppError(401, message);
-export const forbidden = (message = "Sem permissão.") => new AppError(403, message);
-export const notFound = (message = "Recurso não encontrado.") => new AppError(404, message);
+export const unauthorized = (message = "Please sign in to continue.") => new AppError(401, message);
+export const forbidden = (message = "Permission denied.") => new AppError(403, message);
+export const notFound = (message = "Resource not found.") => new AppError(404, message);
 export const conflict = (message: string) => new AppError(409, message);
 export const badRequest = (message: string) => new AppError(400, message);

@@ -12,7 +12,7 @@ export function currentUser(c: Context<HonoEnv>): AuthUser | null {
 	return c.get("user");
 }
 
-/** Garante que há um usuário autenticado, lançando AppError(401) caso contrário. */
+/** Ensures there is an authenticated user, throwing AppError(401) otherwise. */
 export function requireUser(c: Context<HonoEnv>): AuthUser {
 	const user = c.get("user");
 	if (!user) throw unauthorized();

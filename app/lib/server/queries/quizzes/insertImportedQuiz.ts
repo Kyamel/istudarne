@@ -14,7 +14,7 @@ export type ImportInput = {
 	normalizedTags: string[];
 };
 
-/** Persiste quiz, questões, alternativas e tags normalizadas no D1. */
+/** Persists quiz, questions, options, and normalized tags in D1. */
 export async function insertImportedQuiz(db: Database, input: ImportInput) {
 	const { quiz, quizId, ownerId, visibility, sourceFileKey, normalizedTags } = input;
 	const now = new Date();

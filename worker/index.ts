@@ -44,7 +44,7 @@ app.get("/share/quizzes/:quizId", async (c) => {
 		renderSharePage({
 			id: quiz.id,
 			title: quiz.title,
-			description: quiz.description || "Quiz compartilhado no Istudarne.",
+			description: quiz.description || "Shared quiz on Istudarne.",
 			origin: new URL(c.req.url).origin,
 			locale,
 		}),
@@ -56,20 +56,20 @@ registerApiRoutes(app);
 app.notFound((c) => {
 	const url = new URL(c.req.url);
 
-	// Rotas de API desconhecidas respondem em JSON.
+	// Unknown API routes respond with JSON.
 	if (url.pathname.startsWith("/api/")) {
-		return c.json({ error: "Recurso não encontrado." }, 404);
+		return c.json({ error: "Resource not found." }, 404);
 	}
 
-	// Apenas navegação de topo para uma rota inexistente vira a página 404.
+	// Only top-level navigation to an unknown route renders the 404 page.
 	const isAppPath = url.pathname === "/app" || url.pathname.startsWith("/app/");
 	const accept = c.req.header("accept") ?? "";
 	if (!isAppPath && accept.includes("text/html")) {
 		return c.html(renderNotFoundPage(detectLocale(c.req.header("accept-language") ?? null)), 404);
 	}
 
-	// SPA, arquivos estáticos e módulos do dev server (ex.: /@vite/client) são
-	// servidos pelo binding de assets.
+	// SPA routes, static files, and dev-server modules (e.g. /@vite/client)
+	// are served by the assets binding.
 	return c.env.ASSETS.fetch(c.req.raw);
 });
 
