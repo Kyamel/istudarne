@@ -1,3 +1,4 @@
+import { type ChatEvent, chatInboundMessageSchema } from "../contracts";
 import { createContainer } from "./container";
 import type { GroupRepository } from "./repositories/groupRepository";
 
@@ -5,12 +6,6 @@ type ChatSession = {
 	socket: WebSocket;
 	userId: string;
 	displayName: string;
-};
-
-type OutgoingMessage = {
-	type: "history" | "message";
-	messages?: unknown[];
-	message?: unknown;
 };
 
 export class StudyGroupChat implements DurableObject {
@@ -72,22 +67,21 @@ export class StudyGroupChat implements DurableObject {
 	private parseBody(data: unknown): string | null {
 		if (typeof data !== "string") return null;
 		try {
-			const parsed = JSON.parse(data) as { body?: unknown };
-			const body = typeof parsed.body === "string" ? parsed.body.trim() : "";
-			return body ? body.slice(0, 2000) : null;
+			const parsed = chatInboundMessageSchema.safeParse(JSON.parse(data));
+			return parsed.success ? parsed.data.body : null;
 		} catch {
-			const text = data.trim();
-			return text ? text.slice(0, 2000) : null;
+			const parsed = chatInboundMessageSchema.safeParse({ body: data });
+			return parsed.success ? parsed.data.body : null;
 		}
 	}
 
-	private send(socket: WebSocket, payload: OutgoingMessage) {
+	private send(socket: WebSocket, payload: ChatEvent) {
 		if (socket.readyState === WebSocket.OPEN) {
 			socket.send(JSON.stringify(payload));
 		}
 	}
 
-	private broadcast(payload: OutgoingMessage) {
+	private broadcast(payload: ChatEvent) {
 		for (const session of this.sessions) {
 			this.send(session.socket, payload);
 		}

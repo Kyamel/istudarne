@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { UploadedQuiz } from "../../../schemas/quiz";
+import type { UploadedQuiz } from "../../../contracts/quizImport";
 import type { Database } from "../../db/client";
 import { questionOptions, questions, quizTags, quizzes, tags } from "../../db/schema";
 import type { Visibility } from "../../domain/types";

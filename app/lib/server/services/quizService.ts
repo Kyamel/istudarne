@@ -1,4 +1,4 @@
-import { parseUploadedQuiz, type UploadedQuiz } from "../../schemas/quiz";
+import { parseUploadedQuiz, type UploadedQuiz } from "../../contracts/quizImport";
 import type { AuthUser, QuizDetail, QuizSummary, Visibility } from "../domain/types";
 import { badRequest, forbidden, notFound } from "../errors";
 import type { UpdateQuizPatch } from "../queries/quizzes/updateQuizMetadata";

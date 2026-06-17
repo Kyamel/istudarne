@@ -12,6 +12,7 @@ import {
 	TagRow,
 } from "../components";
 import { uploadQuiz } from "../lib/api";
+import { uploadedQuizSchema } from "../lib/contracts";
 import { m } from "../lib/i18n";
 import styles from "./UploadPage.module.css";
 
@@ -23,23 +24,12 @@ type Preview = {
 };
 
 function buildPreview(value: unknown): Preview {
-	if (!value || typeof value !== "object") {
-		throw new Error("JSON inválido.");
-	}
-	const quiz = value as Record<string, unknown>;
-	if (typeof quiz.title !== "string" || !quiz.title.trim()) {
-		throw new Error("title");
-	}
-	if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
-		throw new Error("questions");
-	}
+	const quiz = uploadedQuizSchema.parse(value);
 	return {
 		title: quiz.title,
-		description: typeof quiz.description === "string" ? quiz.description : undefined,
+		description: quiz.description,
 		questionCount: quiz.questions.length,
-		tags: Array.isArray(quiz.tags)
-			? quiz.tags.filter((tag): tag is string => typeof tag === "string")
-			: [],
+		tags: quiz.tags ?? [],
 	};
 }
 

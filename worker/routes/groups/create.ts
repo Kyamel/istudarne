@@ -1,18 +1,12 @@
-import { z } from "zod";
+import { createGroupRequestSchema } from "../../../app/lib/contracts";
 import type { App } from "../../env";
 import { container, requireUser } from "../../http/context";
 import { readBody } from "../../http/validate";
 
-const schema = z.object({
-	name: z.string().min(2).max(80),
-	description: z.string().max(600).nullable().optional(),
-	visibility: z.enum(["public", "private", "invite"]).default("public"),
-});
-
 export function registerCreateGroup(app: App) {
 	app.post("/api/groups", async (c) => {
 		const user = requireUser(c);
-		const body = await readBody(c, schema);
+		const body = await readBody(c, createGroupRequestSchema);
 		const id = await container(c).services.group.create({
 			ownerId: user.id,
 			name: body.name,

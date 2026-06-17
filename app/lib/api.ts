@@ -1,106 +1,55 @@
-export type QuizSummary = {
-	id: string;
-	title: string;
-	description: string | null;
-	visibility: "private" | "public" | "unlisted";
-	questionCount: number;
-	playsCount: number;
-	ownerUsername: string;
-	ownerDisplayName: string;
-	tags: string[];
-};
+import type { z } from "zod";
+import {
+	authUserResponseSchema,
+	type ChatMessage,
+	type CreateGroupRequest,
+	type CurrentUser,
+	createGroupRequestSchema,
+	createGroupResponseSchema,
+	finishAttemptResponseSchema,
+	type GroupDetail,
+	type GroupSummary,
+	groupDetailResponseSchema,
+	groupListResponseSchema,
+	groupMessagesResponseSchema,
+	type HistoryEntry,
+	historyResponseSchema,
+	type LoginRequest,
+	loginRequestSchema,
+	okResponseSchema,
+	type PatchQuizRequest,
+	type Profile,
+	patchQuizRequestSchema,
+	profileResponseSchema,
+	type QuizDetail,
+	type QuizQuestion,
+	type QuizSummary,
+	quizDetailResponseSchema,
+	quizListResponseSchema,
+	quizSummaryResponseSchema,
+	type RegisterRequest,
+	registerRequestSchema,
+	type SubmitAnswerRequest,
+	shareQuizRequestSchema,
+	startAttemptRequestSchema,
+	startAttemptResponseSchema,
+	statsResponseSchema,
+	submitAnswerRequestSchema,
+	submitAnswerResponseSchema,
+	type UserStats,
+} from "./contracts";
 
-export type QuizQuestion = {
-	id: string;
-	topic: string | null;
-	statement: string;
-	answer: string;
-	explanation: string | null;
-	options: { id: string; key: string; text: string }[];
-};
-
-export type QuizDetail = QuizSummary & {
-	ownerId: string;
-	questions: QuizQuestion[];
-};
-
-export type CurrentUser = {
-	id: string;
-	email: string;
-	username: string;
-	displayName: string;
-	bio: string | null;
-	avatarUrl: string | null;
-};
-
-export type UserStats = {
-	questionsToday: number;
-	questionsTotal: number;
-	accuracy: number;
-	streak: number;
-	points: number;
-	quizzesOwned: number;
-	attempts: number;
-};
-
-export type HistoryEntry = {
-	attemptId: string;
-	quizId: string;
-	quizTitle: string;
-	mode: string;
-	status: string;
-	score: number;
-	correctCount: number;
-	wrongCount: number;
-	startedAt: number;
-	finishedAt: number | null;
-};
-
-export type Profile = {
-	id: string;
-	username: string;
-	displayName: string;
-	bio: string | null;
-	avatarUrl: string | null;
-	followers: number;
-	following: number;
-	stats: UserStats;
-	quizzes: QuizSummary[];
-	isFollowing: boolean;
-};
-
-export type GroupSummary = {
-	id: string;
-	name: string;
-	description: string | null;
-	visibility: "public" | "private" | "invite";
-	memberCount: number;
-	isMember: boolean;
-	role: "owner" | "moderator" | "member" | null;
-};
-
-export type GroupDetail = {
-	id: string;
-	name: string;
-	description: string | null;
-	visibility: "public" | "private" | "invite";
-	ownerId: string;
-	role: "owner" | "moderator" | "member" | null;
-	members: {
-		userId: string;
-		role: string;
-		username: string;
-		displayName: string;
-	}[];
-	quizzes: QuizSummary[];
-};
-
-export type ChatMessage = {
-	id: string;
-	body: string;
-	senderId: string;
-	displayName: string;
-	createdAt: number;
+export type {
+	ChatMessage,
+	CurrentUser,
+	GroupDetail,
+	GroupSummary,
+	HistoryEntry,
+	Profile,
+	QuizDetail,
+	QuizQuestion,
+	QuizSummary,
+	UserStats,
 };
 
 export class ApiError extends Error {
@@ -113,7 +62,7 @@ export class ApiError extends Error {
 	}
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+async function request<T>(url: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
 	const response = await fetch(url, {
 		credentials: "include",
 		...init,
@@ -133,8 +82,12 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 		throw new ApiError(message, response.status);
 	}
 
-	if (response.status === 204) return undefined as T;
-	return response.json() as Promise<T>;
+	const data = await response.json();
+	const parsed = schema.safeParse(data);
+	if (!parsed.success) {
+		throw new ApiError("Resposta inválida da API.", response.status);
+	}
+	return parsed.data;
 }
 
 function jsonInit(method: string, body: unknown): RequestInit {
@@ -147,25 +100,22 @@ function jsonInit(method: string, body: unknown): RequestInit {
 
 /* ---------------------------------- auth ---------------------------------- */
 
-export function register(input: {
-	email: string;
-	username: string;
-	displayName: string;
-	password: string;
-}) {
-	return request<{ user: CurrentUser }>("/api/auth/register", jsonInit("POST", input));
+export function register(input: RegisterRequest) {
+	const body = registerRequestSchema.parse(input);
+	return request("/api/auth/register", authUserResponseSchema, jsonInit("POST", body));
 }
 
-export function login(input: { email: string; password: string }) {
-	return request<{ user: CurrentUser }>("/api/auth/login", jsonInit("POST", input));
+export function login(input: LoginRequest) {
+	const body = loginRequestSchema.parse(input);
+	return request("/api/auth/login", authUserResponseSchema, jsonInit("POST", body));
 }
 
 export function logout() {
-	return request<{ ok: true }>("/api/auth/logout", { method: "POST" });
+	return request("/api/auth/logout", okResponseSchema, { method: "POST" });
 }
 
 export function fetchMe() {
-	return request<{ user: CurrentUser }>("/api/auth/me");
+	return request("/api/auth/me", authUserResponseSchema);
 }
 
 /* --------------------------------- quizzes -------------------------------- */
@@ -173,36 +123,30 @@ export function fetchMe() {
 export function searchQuizzes(query = "") {
 	const params = new URLSearchParams();
 	if (query.trim()) params.set("q", query.trim());
-	return request<{ quizzes: QuizSummary[] }>(`/api/quizzes/search?${params.toString()}`);
+	return request(`/api/quizzes/search?${params.toString()}`, quizListResponseSchema);
 }
 
 export function fetchMyQuizzes() {
-	return request<{ quizzes: QuizSummary[] }>("/api/me/quizzes");
+	return request("/api/me/quizzes", quizListResponseSchema);
 }
 
 export function fetchQuiz(id: string) {
-	return request<{ quiz: QuizDetail }>(`/api/quizzes/${id}`);
+	return request(`/api/quizzes/${id}`, quizDetailResponseSchema);
 }
 
-export function patchQuiz(
-	id: string,
-	patch: {
-		title?: string;
-		description?: string | null;
-		visibility?: "private" | "public" | "unlisted";
-		tags?: string[];
-	},
-) {
-	return request<{ quiz: QuizSummary }>(`/api/quizzes/${id}`, jsonInit("PATCH", patch));
+export function patchQuiz(id: string, patch: PatchQuizRequest) {
+	const body = patchQuizRequestSchema.parse(patch);
+	return request(`/api/quizzes/${id}`, quizSummaryResponseSchema, jsonInit("PATCH", body));
 }
 
 export function deleteQuiz(id: string) {
-	return request<{ ok: true }>(`/api/quizzes/${id}`, { method: "DELETE" });
+	return request(`/api/quizzes/${id}`, okResponseSchema, { method: "DELETE" });
 }
 
 export function setQuizPublished(id: string, published: boolean) {
-	return request<{ quiz: QuizSummary }>(
+	return request(
 		`/api/quizzes/${id}/${published ? "publish" : "unpublish"}`,
+		quizSummaryResponseSchema,
 		{ method: "POST" },
 	);
 }
@@ -211,7 +155,7 @@ export function uploadQuiz(file: File, visibility: "private" | "public") {
 	const formData = new FormData();
 	formData.set("file", file);
 	formData.set("visibility", visibility);
-	return request<{ quiz: QuizSummary }>("/api/quizzes/upload", {
+	return request("/api/quizzes/upload", quizSummaryResponseSchema, {
 		method: "POST",
 		body: formData,
 	});
@@ -220,46 +164,47 @@ export function uploadQuiz(file: File, visibility: "private" | "public") {
 /* -------------------------------- attempts -------------------------------- */
 
 export function startAttempt(quizId: string, mode = "practice") {
-	return request<{ attemptId: string }>(
+	const body = startAttemptRequestSchema.parse({ mode });
+	return request(
 		`/api/quizzes/${quizId}/attempts`,
-		jsonInit("POST", { mode }),
+		startAttemptResponseSchema,
+		jsonInit("POST", body),
 	);
 }
 
-export function submitAnswer(
-	attemptId: string,
-	input: { questionId: string; selectedOption: string; timeSpentMs?: number },
-) {
-	return request<{ isCorrect: boolean; answer: string }>(
+export function submitAnswer(attemptId: string, input: SubmitAnswerRequest) {
+	const body = submitAnswerRequestSchema.parse(input);
+	return request(
 		`/api/attempts/${attemptId}/answers`,
-		jsonInit("POST", input),
+		submitAnswerResponseSchema,
+		jsonInit("POST", body),
 	);
 }
 
 export function finishAttempt(attemptId: string) {
-	return request<{
-		summary: { total: number; correct: number; wrong: number; points: number };
-	}>(`/api/attempts/${attemptId}/finish`, { method: "POST" });
+	return request(`/api/attempts/${attemptId}/finish`, finishAttemptResponseSchema, {
+		method: "POST",
+	});
 }
 
 /* ---------------------------------- me ------------------------------------ */
 
 export function fetchStats() {
-	return request<{ stats: UserStats }>("/api/me/stats");
+	return request("/api/me/stats", statsResponseSchema);
 }
 
 export function fetchHistory() {
-	return request<{ history: HistoryEntry[] }>("/api/me/history");
+	return request("/api/me/history", historyResponseSchema);
 }
 
 /* --------------------------------- social --------------------------------- */
 
 export function fetchProfile(username: string) {
-	return request<{ profile: Profile }>(`/api/users/${username}`);
+	return request(`/api/users/${username}`, profileResponseSchema);
 }
 
 export function setFollow(username: string, follow: boolean) {
-	return request<{ ok: true }>(`/api/users/${username}/follow`, {
+	return request(`/api/users/${username}/follow`, okResponseSchema, {
 		method: follow ? "POST" : "DELETE",
 	});
 }
@@ -267,35 +212,33 @@ export function setFollow(username: string, follow: boolean) {
 /* --------------------------------- groups --------------------------------- */
 
 export function fetchGroups() {
-	return request<{ groups: GroupSummary[] }>("/api/groups");
+	return request("/api/groups", groupListResponseSchema);
 }
 
-export function createGroup(input: {
-	name: string;
-	description?: string | null;
-	visibility: "public" | "private" | "invite";
-}) {
-	return request<{ id: string }>("/api/groups", jsonInit("POST", input));
+export function createGroup(input: CreateGroupRequest) {
+	const body = createGroupRequestSchema.parse(input);
+	return request("/api/groups", createGroupResponseSchema, jsonInit("POST", body));
 }
 
 export function fetchGroup(id: string) {
-	return request<{ group: GroupDetail }>(`/api/groups/${id}`);
+	return request(`/api/groups/${id}`, groupDetailResponseSchema);
 }
 
 export function joinGroup(id: string) {
-	return request<{ ok: true }>(`/api/groups/${id}/join`, { method: "POST" });
+	return request(`/api/groups/${id}/join`, okResponseSchema, { method: "POST" });
 }
 
 export function leaveGroup(id: string) {
-	return request<{ ok: true }>(`/api/groups/${id}/leave`, { method: "POST" });
+	return request(`/api/groups/${id}/leave`, okResponseSchema, { method: "POST" });
 }
 
 export function shareQuiz(groupId: string, quizId: string) {
-	return request<{ ok: true }>(`/api/groups/${groupId}/quizzes`, jsonInit("POST", { quizId }));
+	const body = shareQuizRequestSchema.parse({ quizId });
+	return request(`/api/groups/${groupId}/quizzes`, okResponseSchema, jsonInit("POST", body));
 }
 
 export function fetchGroupMessages(id: string) {
-	return request<{ messages: ChatMessage[] }>(`/api/groups/${id}/messages`);
+	return request(`/api/groups/${id}/messages`, groupMessagesResponseSchema);
 }
 
 export function groupChatUrl(id: string) {

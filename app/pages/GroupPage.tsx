@@ -17,6 +17,7 @@ import type { ChatMessage, GroupDetail } from "../lib/api";
 import { fetchGroup, groupChatUrl, leaveGroup } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { cx } from "../lib/classes";
+import { chatEventSchema } from "../lib/contracts";
 import { m } from "../lib/i18n";
 import styles from "./GroupPage.module.css";
 
@@ -51,15 +52,11 @@ export default function GroupPage() {
 		socket.addEventListener("close", () => setConnected(false));
 		socket.addEventListener("message", (event) => {
 			try {
-				const payload = JSON.parse(event.data as string) as {
-					type: "history" | "message";
-					messages?: ChatMessage[];
-					message?: ChatMessage;
-				};
-				if (payload.type === "history" && payload.messages) {
+				const payload = chatEventSchema.parse(JSON.parse(event.data as string));
+				if (payload.type === "history") {
 					setMessages(payload.messages);
-				} else if (payload.type === "message" && payload.message) {
-					setMessages((current) => [...current, payload.message as ChatMessage]);
+				} else {
+					setMessages((current) => [...current, payload.message]);
 				}
 			} catch {
 				// ignora payloads malformados
