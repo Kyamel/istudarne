@@ -1,4 +1,4 @@
-import styles from "./feedback.module.css";
+import styles from "./Feedback.module.css";
 
 export default function Loading({ children }: { children: string }) {
 	return (

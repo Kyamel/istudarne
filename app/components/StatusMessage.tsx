@@ -1,5 +1,5 @@
 import { cx } from "../lib/classes";
-import styles from "./feedback.module.css";
+import styles from "./Feedback.module.css";
 
 type StatusMessageProps = {
 	children: string;
