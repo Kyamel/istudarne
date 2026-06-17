@@ -5,6 +5,10 @@
 	max-width: 1120px;
 }
 
+.compact {
+	gap: 12px;
+}
+
 .narrow {
 	max-width: 760px;
 }

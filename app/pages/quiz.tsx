@@ -143,7 +143,7 @@ export function QuizPage() {
 	const allAnswered = Object.keys(answers).length === quiz.questions.length;
 
 	return (
-		<Page narrow>
+		<Page narrow compact>
 			<PageHeader eyebrow={quiz.title} title={m.quiz_session()} column />
 
 			<div

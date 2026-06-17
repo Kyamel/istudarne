@@ -2,8 +2,20 @@ import type { HTMLAttributes, ReactNode } from "react";
 import { cx } from "../lib/classes";
 import styles from "./LayoutPrimitives.module.css";
 
-export function Page({ children, narrow }: { children: ReactNode; narrow?: boolean }) {
-	return <section className={cx(styles.stack, narrow && styles.narrow)}>{children}</section>;
+export function Page({
+	children,
+	compact,
+	narrow,
+}: {
+	children: ReactNode;
+	compact?: boolean;
+	narrow?: boolean;
+}) {
+	return (
+		<section className={cx(styles.stack, compact && styles.compact, narrow && styles.narrow)}>
+			{children}
+		</section>
+	);
 }
 
 export function Panel({ className, ...props }: HTMLAttributes<HTMLElement>) {
