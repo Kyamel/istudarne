@@ -18,9 +18,9 @@ import { fetchGroup, groupChatUrl, leaveGroup } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { cx } from "../lib/classes";
 import { m } from "../lib/i18n";
-import styles from "./Group.module.css";
+import styles from "./GroupPage.module.css";
 
-export function GroupPage() {
+export default function GroupPage() {
 	const { groupId } = useParams();
 	const { user } = useAuth();
 	const [group, setGroup] = useState<GroupDetail | null>(null);

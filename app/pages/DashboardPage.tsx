@@ -28,7 +28,7 @@ function formatDate(timestamp: number) {
 
 const metricSkeletons = ["questions", "accuracy", "streak", "points"];
 
-export function DashboardPage() {
+export default function DashboardPage() {
 	const { user } = useAuth();
 	const [stats, setStats] = useState<UserStats | null>(null);
 	const [history, setHistory] = useState<HistoryEntry[]>([]);

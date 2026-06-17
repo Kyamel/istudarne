@@ -15,9 +15,9 @@ import type { GroupSummary } from "../lib/api";
 import { createGroup, fetchGroups, joinGroup } from "../lib/api";
 import { cx } from "../lib/classes";
 import { m } from "../lib/i18n";
-import styles from "./Groups.module.css";
+import styles from "./GroupsPage.module.css";
 
-export function GroupsPage() {
+export default function GroupsPage() {
 	const navigate = useNavigate();
 	const [groups, setGroups] = useState<GroupSummary[]>([]);
 	const [status, setStatus] = useState<string>(m.groups_loading());

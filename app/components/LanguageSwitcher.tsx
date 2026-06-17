@@ -1,7 +1,7 @@
 import { changeLocale, getLocale, localeLabels, locales, m } from "../lib/i18n";
 import styles from "./LanguageSwitcher.module.css";
 
-export function LanguageSwitcher() {
+export default function LanguageSwitcher() {
 	return (
 		<label className={styles.switcher}>
 			<span className={styles.srOnly}>{m.common_language()}</span>

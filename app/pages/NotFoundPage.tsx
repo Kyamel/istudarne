@@ -1,8 +1,8 @@
 import { ButtonLink, CenterActions, Eyebrow, Muted, Page } from "../components";
 import { m } from "../lib/i18n";
-import styles from "./NotFound.module.css";
+import styles from "./NotFoundPage.module.css";
 
-export function NotFoundPage() {
+export default function NotFoundPage() {
 	return (
 		<Page narrow>
 			<article className={styles.result}>

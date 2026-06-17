@@ -1,23 +1,24 @@
-export { Avatar } from "./Avatar";
-export { Button, ButtonLink } from "./Button";
-export { Field } from "./Field";
-export { Loading, StatusMessage } from "./feedback";
-export { LanguageSwitcher } from "./LanguageSwitcher";
-export {
-	CenterActions,
-	CheckList,
-	ContentGrid,
-	Eyebrow,
-	MetricsGrid,
-	Muted,
-	Page,
-	Panel,
-	Pill,
-	SimpleList,
-	StatusTag,
-	TagRow,
-} from "./LayoutPrimitives";
-export { MetricCard, MetricSkeleton } from "./MetricCard";
-export { PageHeader } from "./PageHeader";
-export { QuizCard } from "./QuizCard";
-export { Tabs } from "./Tabs";
+export { default as Avatar } from "./Avatar";
+export { default as Button } from "./Button";
+export { default as ButtonLink } from "./ButtonLink";
+export { default as CenterActions } from "./CenterActions";
+export { default as CheckList } from "./CheckList";
+export { default as ContentGrid } from "./ContentGrid";
+export { default as Eyebrow } from "./Eyebrow";
+export { default as Field } from "./Field";
+export { default as LanguageSwitcher } from "./LanguageSwitcher";
+export { default as Loading } from "./Loading";
+export { default as MetricCard } from "./MetricCard";
+export { default as MetricSkeleton } from "./MetricSkeleton";
+export { default as MetricsGrid } from "./MetricsGrid";
+export { default as Muted } from "./Muted";
+export { default as Page } from "./Page";
+export { default as PageHeader } from "./PageHeader";
+export { default as Panel } from "./Panel";
+export { default as Pill } from "./Pill";
+export { default as QuizCard } from "./QuizCard";
+export { default as SimpleList } from "./SimpleList";
+export { default as StatusMessage } from "./StatusMessage";
+export { default as StatusTag } from "./StatusTag";
+export { default as Tabs } from "./Tabs";
+export { default as TagRow } from "./TagRow";

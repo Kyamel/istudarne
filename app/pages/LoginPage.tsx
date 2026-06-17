@@ -4,11 +4,11 @@ import { Button, Field, LanguageSwitcher, StatusMessage } from "../components";
 import { ApiError } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { m } from "../lib/i18n";
-import styles from "./Login.module.css";
+import styles from "./LoginPage.module.css";
 
 type Mode = "login" | "register";
 
-export function LoginPage() {
+export default function LoginPage() {
 	const { login, register } = useAuth();
 	const [mode, setMode] = useState<Mode>("login");
 	const [email, setEmail] = useState("");

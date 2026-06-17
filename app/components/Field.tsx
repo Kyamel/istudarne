@@ -5,7 +5,7 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
 	label: string;
 };
 
-export function Field({ label, ...inputProps }: FieldProps) {
+export default function Field({ label, ...inputProps }: FieldProps) {
 	return (
 		<label className={styles.field}>
 			<span className={styles.label}>{label}</span>

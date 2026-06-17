@@ -1,7 +1,7 @@
 import type { QuizSummary } from "../lib/api";
 import { cx } from "../lib/classes";
 import { m } from "../lib/i18n";
-import { ButtonLink } from "./Button";
+import ButtonLink from "./ButtonLink";
 import styles from "./QuizCard.module.css";
 
 const visibilityLabel: Record<QuizSummary["visibility"], () => string> = {
@@ -10,7 +10,7 @@ const visibilityLabel: Record<QuizSummary["visibility"], () => string> = {
 	unlisted: () => m.visibility_unlisted(),
 };
 
-export function QuizCard({ quiz }: { quiz: QuizSummary }) {
+export default function QuizCard({ quiz }: { quiz: QuizSummary }) {
 	return (
 		<article className={styles.card}>
 			<div>

@@ -10,7 +10,13 @@ type PageHeaderProps = {
 	column?: boolean;
 };
 
-export function PageHeader({ eyebrow, title, description, actions, column }: PageHeaderProps) {
+export default function PageHeader({
+	eyebrow,
+	title,
+	description,
+	actions,
+	column,
+}: PageHeaderProps) {
 	return (
 		<header className={cx(styles.header, column && styles.column)}>
 			<div className={styles.content}>

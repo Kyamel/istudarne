@@ -13,7 +13,7 @@ import {
 } from "../components";
 import { uploadQuiz } from "../lib/api";
 import { m } from "../lib/i18n";
-import styles from "./Upload.module.css";
+import styles from "./UploadPage.module.css";
 
 type Preview = {
 	title: string;
@@ -43,7 +43,7 @@ function buildPreview(value: unknown): Preview {
 	};
 }
 
-export function UploadPage() {
+export default function UploadPage() {
 	const [file, setFile] = useState<File | null>(null);
 	const [preview, setPreview] = useState<Preview | null>(null);
 	const [visibility, setVisibility] = useState<"private" | "public">("private");

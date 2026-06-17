@@ -12,7 +12,7 @@ type TabsProps<T extends string> = {
 	onChange: (value: T) => void;
 };
 
-export function Tabs<T extends string>({ label, value, options, onChange }: TabsProps<T>) {
+export default function Tabs<T extends string>({ label, value, options, onChange }: TabsProps<T>) {
 	return (
 		<div className={styles.tabs} role="tablist" aria-label={label}>
 			{options.map((option) => (

@@ -17,9 +17,9 @@ import type { Profile } from "../lib/api";
 import { fetchProfile, setFollow } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { m } from "../lib/i18n";
-import styles from "./Profile.module.css";
+import styles from "./ProfilePage.module.css";
 
-export function ProfilePage() {
+export default function ProfilePage() {
 	const { username } = useParams();
 	const { user } = useAuth();
 	const [profile, setProfile] = useState<Profile | null>(null);

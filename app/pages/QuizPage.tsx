@@ -15,12 +15,12 @@ import type { QuizDetail } from "../lib/api";
 import { fetchQuiz, finishAttempt, startAttempt, submitAnswer } from "../lib/api";
 import { cx } from "../lib/classes";
 import { m } from "../lib/i18n";
-import styles from "./Quiz.module.css";
+import styles from "./QuizPage.module.css";
 
 type AnswerState = { selected: string; isCorrect: boolean; correctAnswer: string };
 type Summary = { total: number; correct: number; wrong: number; points: number };
 
-export function QuizPage() {
+export default function QuizPage() {
 	const { quizId } = useParams();
 	const [quiz, setQuiz] = useState<QuizDetail | null>(null);
 	const [attemptId, setAttemptId] = useState<string | null>(null);

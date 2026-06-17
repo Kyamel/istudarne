@@ -6,7 +6,7 @@ type AvatarProps = {
 	size?: "sm" | "lg";
 };
 
-export function Avatar({ name, size = "lg" }: AvatarProps) {
+export default function Avatar({ name, size = "lg" }: AvatarProps) {
 	const initial = (name || "?").slice(0, 1).toUpperCase();
 	return (
 		<span className={cx(styles.avatar, styles[size])} aria-hidden="true">

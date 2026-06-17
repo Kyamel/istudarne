@@ -3,11 +3,11 @@ import { ButtonLink, Muted, Page, PageHeader, QuizCard, Tabs } from "../componen
 import type { QuizSummary } from "../lib/api";
 import { fetchMyQuizzes, searchQuizzes } from "../lib/api";
 import { m } from "../lib/i18n";
-import styles from "./Quizzes.module.css";
+import styles from "./QuizzesPage.module.css";
 
 type Tab = "public" | "mine";
 
-export function QuizzesPage() {
+export default function QuizzesPage() {
 	const [tab, setTab] = useState<Tab>("public");
 	const [query, setQuery] = useState("");
 	const [quizzes, setQuizzes] = useState<QuizSummary[]>([]);
