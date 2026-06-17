@@ -1,0 +1,43 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "istudarne",
+	"main": "./worker/index.ts",
+	"compatibility_date": "2026-06-16",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"directory": "./dist/client",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": true
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "istudarne-db",
+			"database_id": "replace-with-cloudflare-d1-id"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "QUIZ_FILES",
+			"bucket_name": "istudarne-quiz-files"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "STUDY_GROUP_CHAT",
+				"class_name": "StudyGroupChat"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["StudyGroupChat"]
+		}
+	]
+}

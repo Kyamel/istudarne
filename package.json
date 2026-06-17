@@ -1,0 +1,46 @@
+{
+	"name": "istudarne",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"deploy": "npm run build && wrangler deploy",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"lint": "biome lint .",
+		"check": "biome check --write .",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate:local": "wrangler d1 migrations apply istudarne-db --local",
+		"db:migrate:remote": "wrangler d1 migrations apply istudarne-db --remote"
+	},
+	"dependencies": {
+		"@hono/swagger-ui": "^0.6.1",
+		"@hono/zod-openapi": "^1.4.0",
+		"@inlang/paraglide-js": "^2.19.0",
+		"drizzle-orm": "^0.45.2",
+		"hono": "^4.7.11",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0",
+		"react-router-dom": "^7.6.2",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.0",
+		"@cloudflare/vite-plugin": "^1.7.4",
+		"@cloudflare/workers-types": "^4.20250616.0",
+		"@types/node": "^24.0.3",
+		"@types/react": "^19.1.8",
+		"@types/react-dom": "^19.1.6",
+		"@vitejs/plugin-react": "^6.0.2",
+		"drizzle-kit": "^0.31.1",
+		"typescript": "^5.8.3",
+		"vite": "^8.0.16",
+		"wrangler": "^4.20.5"
+	},
+	"overrides": {
+		"esbuild": "0.28.1",
+		"ws": "8.21.0"
+	}
+}

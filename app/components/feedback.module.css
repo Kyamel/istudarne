@@ -1,0 +1,18 @@
+.status {
+	background: var(--surface-muted);
+	border: 1px solid var(--border);
+	border-left: 4px solid var(--primary);
+	border-radius: var(--radius-sm);
+	color: var(--text);
+	margin: 0;
+	padding: 14px;
+}
+
+.danger {
+	background: var(--danger-soft);
+	border-left-color: var(--danger);
+}
+
+.muted {
+	color: var(--text-muted);
+}

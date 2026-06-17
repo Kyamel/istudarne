@@ -1,0 +1,57 @@
+/* Tokens de design (cores, sombras, raios). Único lugar onde os valores vivem.
+   Importado por app.css e por cada arquivo de módulo CSS. */
+
+:root {
+	--bg: #eef1ec;
+	--surface: #f8faf6;
+	--surface-muted: #e3e8df;
+	--surface-raised: #ffffff;
+	--text: #161d18;
+	--text-muted: #566159;
+	--text-soft: #8a958c;
+	--border: #d2dacd;
+	--border-strong: #b6c1b0;
+	--primary: #2f6a43;
+	--primary-hover: #245636;
+	--primary-soft: #d8e6da;
+	--secondary: #8a6d2e;
+	--secondary-soft: #ece1c6;
+	--danger: #a8463f;
+	--danger-soft: #f3dad6;
+	--warning: #9a6a17;
+	--warning-soft: #f3e7c4;
+	--success: #2f7d4f;
+	--success-soft: #d8ecdd;
+	--shadow: rgba(15, 25, 18, 0.1);
+	--shadow-lg: rgba(15, 25, 18, 0.18);
+	--focus-ring: rgba(47, 106, 67, 0.45);
+	--radius-sm: 10px;
+	--radius-md: 14px;
+	--radius-lg: 20px;
+}
+
+:root[data-theme="dark"] {
+	--bg: #0c100d;
+	--surface: #141b16;
+	--surface-muted: #1a221c;
+	--surface-raised: #18211a;
+	--text: #e7efe6;
+	--text-muted: #9aaf9f;
+	--text-soft: #6a7e70;
+	--border: #243029;
+	--border-strong: #354840;
+	--primary: #36925b;
+	--primary-hover: #45b370;
+	--primary-soft: #15281c;
+	--secondary: #c9a24a;
+	--secondary-soft: #2c2614;
+	--danger: #d97a72;
+	--danger-soft: #341f1d;
+	--warning: #cf9a40;
+	--warning-soft: #2e2614;
+	--success: #4cae74;
+	--success-soft: #14271c;
+	--shadow: rgba(0, 0, 0, 0.45);
+	--shadow-lg: rgba(0, 0, 0, 0.6);
+	--focus-ring: rgba(69, 179, 112, 0.45);
+}

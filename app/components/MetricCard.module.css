@@ -1,0 +1,32 @@
+.card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	box-shadow: 0 8px 24px var(--shadow);
+	padding: 20px;
+}
+
+.label {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+
+.value {
+	display: block;
+	font-size: clamp(1.6rem, 5vw, 2rem);
+	margin-top: 6px;
+}
+
+.skeleton .label,
+.skeleton .value {
+	animation: pulse 1.4s ease-in-out infinite;
+	background: var(--surface-muted);
+	border-radius: 6px;
+	color: transparent;
+}
+
+@keyframes pulse {
+	50% {
+		opacity: 0.5;
+	}
+}

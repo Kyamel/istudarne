@@ -1,8 +1,18 @@
-# PDF de origem das questões (não precisa ser publicado).
-# Remova esta linha se quiser versioná-lo no repositório.
 *.pdf
 
 # Lixo de sistema operacional / editor
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Dependências e build do app React/Worker
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+worker-configuration.d.ts.map
+
+# i18n: runtime gerado pelo Paraglide e cache do inlang
+app/paraglide/
+.inlang/
+project.inlang/cache/

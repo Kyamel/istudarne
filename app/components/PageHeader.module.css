@@ -1,0 +1,37 @@
+.header {
+	align-items: flex-start;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	justify-content: space-between;
+}
+
+.column {
+	flex-direction: column;
+}
+
+.content {
+	flex: 1 1 22rem;
+	min-width: min(100%, 22rem);
+}
+
+.eyebrow {
+	color: var(--secondary);
+	font-size: 0.78rem;
+	font-weight: 800;
+	letter-spacing: 0.03em;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.title {
+	font-size: clamp(1.7rem, 5vw, 2.8rem);
+	line-height: 1.05;
+	margin: 4px 0 10px;
+}
+
+.description {
+	color: var(--text-muted);
+	margin: 0;
+	max-width: 60ch;
+}

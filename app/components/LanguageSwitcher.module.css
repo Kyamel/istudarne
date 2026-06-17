@@ -1,0 +1,26 @@
+.switcher {
+	display: block;
+}
+
+.select {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	color: var(--text);
+	cursor: pointer;
+	min-height: 44px;
+	padding: 0 12px;
+	width: 100%;
+}
+
+.srOnly {
+	border: 0;
+	clip: rect(0, 0, 0, 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
