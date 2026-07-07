@@ -19,7 +19,7 @@ type CommandPaletteProps = {
 	emptyLabel: string;
 };
 
-/* Obsidian-style command palette: a centered modal with a search input and a
+/* Command palette: a centered modal with a search input and a
    keyboard-navigable list of actions. Opens via Ctrl/Cmd+K or Ctrl/Cmd+P. */
 export default function CommandPalette({
 	open,

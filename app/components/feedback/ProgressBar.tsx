@@ -13,7 +13,7 @@ export default function ProgressBar({ value }: ProgressBarProps) {
 			aria-valuemax={100}
 		>
 			<span
-				className="block h-full bg-primary transition-[width] duration-[240ms] ease-out"
+				className="block h-full bg-primary transition-[width] duration-240 ease-out"
 				style={{ width: `${value}%` }}
 			/>
 		</div>

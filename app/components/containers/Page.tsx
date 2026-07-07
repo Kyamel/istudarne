@@ -13,7 +13,7 @@ export default function Page({ children, compact, narrow }: PageProps) {
 			className={cx(
 				"mx-auto grid w-full",
 				compact ? "gap-3" : "gap-6",
-				narrow ? "max-w-[760px]" : "max-w-[1120px]",
+				narrow ? "max-w-190" : "max-w-280",
 			)}
 		>
 			{children}

@@ -17,7 +17,7 @@ export default function ChatBubble({ author, body, self }: ChatBubbleProps) {
 			)}
 		>
 			<span className="mb-0.5 block text-[0.74rem] font-bold text-secondary">{author}</span>
-			<p className="[overflow-wrap:anywhere]">{body}</p>
+			<p className="wrap-anywhere">{body}</p>
 		</div>
 	);
 }
