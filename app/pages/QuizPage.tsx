@@ -1,21 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
+	AnswerFeedback,
 	Button,
 	ButtonLink,
 	CenterActions,
-	Eyebrow,
 	Loading,
 	Page,
 	PageHeader,
+	Panel,
 	Pill,
+	ProgressBar,
+	QuizOption,
+	ResultCard,
+	ResultMetric,
+	ResultMetrics,
+	Row,
+	SplitActions,
+	Stack,
 	StatusMessage,
 } from "../components";
 import type { QuizDetail } from "../lib/api";
 import { fetchQuiz, finishAttempt, startAttempt, submitAnswer } from "../lib/api";
-import { cx } from "../lib/classes";
 import { m } from "../lib/i18n";
-import styles from "./QuizPage.module.css";
 
 type AnswerState = { selected: string; isCorrect: boolean; correctAnswer: string };
 type Summary = { total: number; correct: number; wrong: number; points: number };
@@ -111,30 +118,25 @@ export default function QuizPage() {
 	if (summary) {
 		return (
 			<Page narrow>
-				<article className={styles.result}>
-					<Eyebrow>{m.quiz_result_eyebrow()}</Eyebrow>
-					<h1>{m.quiz_result_title({ correct: summary.correct, total: summary.total })}</h1>
-					<div className={styles.resultMetrics}>
-						<div>
-							<strong>{Math.round((summary.correct / Math.max(summary.total, 1)) * 100)}%</strong>
-							<span>{m.quiz_result_accuracy()}</span>
-						</div>
-						<div>
-							<strong>+{summary.points}</strong>
-							<span>{m.quiz_result_points()}</span>
-						</div>
-						<div>
-							<strong>{summary.wrong}</strong>
-							<span>{m.quiz_result_review()}</span>
-						</div>
-					</div>
+				<ResultCard
+					eyebrow={m.quiz_result_eyebrow()}
+					title={m.quiz_result_title({ correct: summary.correct, total: summary.total })}
+				>
+					<ResultMetrics>
+						<ResultMetric
+							value={`${Math.round((summary.correct / Math.max(summary.total, 1)) * 100)}%`}
+							label={m.quiz_result_accuracy()}
+						/>
+						<ResultMetric value={`+${summary.points}`} label={m.quiz_result_points()} />
+						<ResultMetric value={summary.wrong} label={m.quiz_result_review()} />
+					</ResultMetrics>
 					<CenterActions>
 						<ButtonLink to="/quizzes" variant="primary">
 							{m.dashboard_view_library()}
 						</ButtonLink>
 						<ButtonLink to="/">{m.quiz_go_dashboard()}</ButtonLink>
 					</CenterActions>
-				</article>
+				</ResultCard>
 			</Page>
 		);
 	}
@@ -146,65 +148,44 @@ export default function QuizPage() {
 		<Page narrow compact>
 			<PageHeader eyebrow={quiz.title} title={m.quiz_session()} column />
 
-			<div
-				className={styles.progress}
-				role="progressbar"
-				aria-valuenow={progress}
-				aria-valuemin={0}
-				aria-valuemax={100}
-			>
-				<span style={{ width: `${progress}%` }} />
-			</div>
+			<ProgressBar value={progress} />
 
-			<article className={styles.panel}>
-				<div className={styles.questionHead}>
-					<span>{m.quiz_progress({ current: index + 1, total: quiz.questions.length })}</span>
+			<Panel>
+				<Row justify="between" gap="sm">
+					<span className="text-fg-soft">
+						{m.quiz_progress({ current: index + 1, total: quiz.questions.length })}
+					</span>
 					{question.topic ? <Pill>{question.topic}</Pill> : null}
-				</div>
-				<h2>{question.statement}</h2>
+				</Row>
+				<h2 className="text-[clamp(1.2rem,3.5vw,1.5rem)] leading-[1.35]">{question.statement}</h2>
 
-				<div className={styles.options}>
+				<Stack gap="sm">
 					{question.options.map((option) => {
 						const isSelected = answered?.selected === option.key;
-						const isCorrect = answered && option.key === answered.correctAnswer;
-						const isWrong = answered && isSelected && !answered.isCorrect;
 						return (
-							<button
-								aria-pressed={isSelected}
-								className={cx(
-									styles.option,
-									isSelected && styles.selected,
-									isCorrect && styles.correct,
-									isWrong && styles.wrong,
-								)}
-								disabled={Boolean(answered) || pending !== null}
+							<QuizOption
 								key={option.id}
-								onClick={() => handleSelect(option.key)}
-								type="button"
-							>
-								<span className={styles.optionKey} aria-hidden="true">
-									{option.key}
-								</span>
-								<span className={styles.optionText}>{option.text}</span>
-							</button>
+								optionKey={option.key}
+								text={option.text}
+								selected={isSelected}
+								correct={Boolean(answered && option.key === answered.correctAnswer)}
+								wrong={Boolean(answered && isSelected && !answered.isCorrect)}
+								disabled={Boolean(answered) || pending !== null}
+								onSelect={() => handleSelect(option.key)}
+							/>
 						);
 					})}
-				</div>
+				</Stack>
 
 				{answered ? (
-					<div
-						className={cx(
-							styles.feedback,
-							answered.isCorrect ? styles.feedbackOk : styles.feedbackBad,
-						)}
-						role="status"
-					>
-						<strong>{answered.isCorrect ? m.quiz_correct() : m.quiz_almost()}</strong>
-						{question.explanation ? <p>{question.explanation}</p> : null}
-					</div>
+					<AnswerFeedback
+						correct={answered.isCorrect}
+						title={answered.isCorrect ? m.quiz_correct() : m.quiz_almost()}
+						explanation={question.explanation ?? undefined}
+					/>
 				) : null}
 
-				<div className={styles.nav}>
+				<SplitActions>
 					<Button
 						disabled={index === 0}
 						onClick={() => {
@@ -229,8 +210,8 @@ export default function QuizPage() {
 							{m.quiz_next()}
 						</Button>
 					)}
-				</div>
-			</article>
+				</SplitActions>
+			</Panel>
 		</Page>
 	);
 }

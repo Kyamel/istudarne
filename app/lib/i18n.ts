@@ -1,5 +1,5 @@
-import { m } from "../paraglide/messages";
-import { baseLocale, getLocale, locales, setLocale } from "../paraglide/runtime";
+import { m } from "@shared/paraglide/messages";
+import { baseLocale, getLocale, locales, setLocale } from "@shared/paraglide/runtime";
 
 export { baseLocale, getLocale, locales, m, setLocale };
 

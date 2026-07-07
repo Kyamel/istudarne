@@ -1,25 +1,30 @@
-import type { FormEvent } from "react";
+import { chatEventSchema } from "@shared/contracts";
+import type { SubmitEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
 	Button,
 	ButtonLink,
-	Eyebrow,
+	ChatBubble,
+	ChatComposer,
+	ChatLog,
+	ListItem,
 	Loading,
 	Muted,
 	Page,
+	PageHeader,
 	Panel,
+	Pill,
+	Row,
 	SimpleList,
+	Stack,
 	StatusMessage,
 	StatusTag,
 } from "../components";
 import type { ChatMessage, GroupDetail } from "../lib/api";
 import { fetchGroup, groupChatUrl, leaveGroup } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
-import { cx } from "../lib/classes";
-import { chatEventSchema } from "../lib/contracts";
 import { m } from "../lib/i18n";
-import styles from "./GroupPage.module.css";
 
 export default function GroupPage() {
 	const { groupId } = useParams();
@@ -73,7 +78,7 @@ export default function GroupPage() {
 		logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
 	}, [messageCount]);
 
-	function sendMessage(event: FormEvent<HTMLFormElement>) {
+	function sendMessage(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 		const body = draft.trim();
 		if (!body || socketRef.current?.readyState !== WebSocket.OPEN) return;
@@ -108,91 +113,85 @@ export default function GroupPage() {
 
 	return (
 		<Page>
-			<header className={styles.header}>
-				<div>
-					<Eyebrow>{m.group_eyebrow()}</Eyebrow>
-					<h1>{group.name}</h1>
-					<p>{group.description || "—"}</p>
-				</div>
-				{group.role && group.role !== "owner" ? (
-					<Button variant="ghost" onClick={handleLeave}>
-						{m.group_leave()}
-					</Button>
-				) : null}
-			</header>
+			<PageHeader
+				eyebrow={m.group_eyebrow()}
+				title={group.name}
+				description={group.description || "—"}
+				actions={
+					group.role && group.role !== "owner" ? (
+						<Button variant="ghost" onClick={handleLeave}>
+							{m.group_leave()}
+						</Button>
+					) : null
+				}
+			/>
 
-			<div className={styles.layout}>
-				<div className={styles.main}>
-					<Panel>
-						<h2>{m.group_shared_quizzes()}</h2>
+			<div className="grid items-start gap-4.5 desktop:grid-cols-[minmax(0,1fr)_280px]">
+				<Stack gap="lg">
+					<Panel title={m.group_shared_quizzes()}>
 						{group.quizzes.length === 0 ? (
 							<Muted>{m.group_no_quizzes()}</Muted>
 						) : (
 							<SimpleList>
 								{group.quizzes.map((quiz) => (
-									<li key={quiz.id}>
+									<ListItem
+										key={quiz.id}
+										trailing={<small>{m.quiz_card_questions({ count: quiz.questionCount })}</small>}
+									>
 										<a href={`/app/quizzes/${quiz.id}/play`}>{quiz.title}</a>
-										<small>{m.quiz_card_questions({ count: quiz.questionCount })}</small>
-									</li>
+									</ListItem>
 								))}
 							</SimpleList>
 						)}
 					</Panel>
 
 					{group.role ? (
-						<Panel className={styles.chatPanel}>
-							<div className={styles.chatHead}>
-								<h2>{m.group_chat()}</h2>
+						<Panel>
+							<Row justify="between" gap="sm">
+								<h2 className="text-xl">{m.group_chat()}</h2>
 								<StatusTag tone={connected ? "ok" : "pending"}>
 									{connected ? m.group_online() : m.group_connecting()}
 								</StatusTag>
-							</div>
+							</Row>
 
-							<div className={styles.log} ref={logRef} aria-live="polite">
+							<ChatLog ref={logRef}>
 								{messages.length === 0 ? (
 									<Muted>{m.group_no_messages()}</Muted>
 								) : (
 									messages.map((message) => (
-										<div
-											className={cx(styles.bubble, message.senderId === user?.id && styles.self)}
+										<ChatBubble
 											key={message.id}
-										>
-											<span className={styles.author}>{message.displayName}</span>
-											<p>{message.body}</p>
-										</div>
+											author={message.displayName}
+											body={message.body}
+											self={message.senderId === user?.id}
+										/>
 									))
 								)}
-							</div>
+							</ChatLog>
 
-							<form className={styles.form} onSubmit={sendMessage}>
-								<label className={styles.srOnly} htmlFor="chat-input">
-									{m.group_message()}
-								</label>
-								<input
-									autoComplete="off"
-									id="chat-input"
-									maxLength={2000}
-									onChange={(event) => setDraft(event.target.value)}
-									placeholder={m.group_message_placeholder()}
-									value={draft}
-								/>
-								<Button variant="primary" disabled={!connected} type="submit">
-									{m.group_send()}
-								</Button>
-							</form>
+							<ChatComposer
+								value={draft}
+								onChange={setDraft}
+								onSubmit={sendMessage}
+								label={m.group_message()}
+								placeholder={m.group_message_placeholder()}
+								sendLabel={m.group_send()}
+								disabled={!connected}
+							/>
 						</Panel>
 					) : null}
-				</div>
+				</Stack>
 
 				<aside>
-					<Panel>
-						<h2>{m.group_members_title()}</h2>
+					<Panel title={m.group_members_title()}>
 						<SimpleList>
 							{group.members.map((member) => (
-								<li key={member.userId}>
+								<ListItem
+									key={member.userId}
+									trailing={<Pill className="capitalize">{member.role}</Pill>}
+								>
 									<a href={`/app/users/${member.username}`}>{member.displayName}</a>
-									<span className={styles.role}>{member.role}</span>
-								</li>
+								</ListItem>
 							))}
 						</SimpleList>
 					</Panel>

@@ -17,6 +17,7 @@ import { registerHealth } from "./health";
 import { registerMyHistory } from "./me/history";
 import { registerMyStats } from "./me/stats";
 import { registerQuizDetail } from "./quizzes/detail";
+import { registerExportQuiz } from "./quizzes/export";
 import { registerListMyQuizzes } from "./quizzes/listMine";
 import { registerPatchQuiz } from "./quizzes/patch";
 import { registerDeleteQuiz } from "./quizzes/remove";
@@ -42,6 +43,7 @@ export function registerApiRoutes(app: App) {
 	registerMyStats(app);
 	registerMyHistory(app);
 	registerQuizDetail(app);
+	registerExportQuiz(app);
 	registerPatchQuiz(app);
 	registerDeleteQuiz(app);
 	registerPublishQuiz(app);

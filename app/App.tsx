@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
-import styles from "./App.module.css";
-import { Button, LanguageSwitcher } from "./components";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+	AccountBadge,
+	Backdrop,
+	BootScreen,
+	Brand,
+	Button,
+	type Command,
+	CommandPalette,
+	IconButton,
+	LanguageSwitcher,
+	NavItem,
+	SkipLink,
+	ThemeToggle,
+} from "./components";
 import { useAuth } from "./lib/auth-context";
-import { cx } from "./lib/classes";
 import { m } from "./lib/i18n";
 import DashboardPage from "./pages/DashboardPage";
 import GroupPage from "./pages/GroupPage";
@@ -32,13 +43,23 @@ function useTheme() {
 function Shell() {
 	const { theme, setTheme } = useTheme();
 	const { user, logout } = useAuth();
+	const navigate = useNavigate();
 	const [navOpen, setNavOpen] = useState(false);
+	const [paletteOpen, setPaletteOpen] = useState(false);
 
 	useEffect(() => {
-		const onKey = (event: KeyboardEvent) => event.key === "Escape" && setNavOpen(false);
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape") setNavOpen(false);
+			if ((event.ctrlKey || event.metaKey) && (event.key === "k" || event.key === "p")) {
+				event.preventDefault();
+				setPaletteOpen((open) => !open);
+			}
+		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
 	}, []);
+
+	const closeNav = () => setNavOpen(false);
 
 	const navItems = [
 		{ to: "/", label: m.nav_dashboard(), end: true },
@@ -47,104 +68,117 @@ function Shell() {
 		{ to: "/groups", label: m.nav_groups(), end: false },
 	];
 
-	return (
-		<div className={styles.shell} data-nav-open={navOpen}>
-			<a className={styles.skipLink} href="#main-content">
-				{m.common_skip_to_content()}
-			</a>
+	const commands: Command[] = [
+		...navItems.map((item) => ({
+			id: `go${item.to}`,
+			label: m.palette_go({ target: item.label }),
+			keywords: item.to,
+			run: () => navigate(item.to),
+		})),
+		...(user
+			? [
+					{
+						id: "go/profile",
+						label: m.palette_go({ target: m.nav_profile() }),
+						keywords: user.username,
+						run: () => navigate(`/users/${user.username}`),
+					},
+				]
+			: []),
+		{
+			id: "theme",
+			label: m.palette_theme_toggle(),
+			hint: theme === "dark" ? m.common_theme_light() : m.common_theme_dark(),
+			run: () => setTheme(theme === "dark" ? "light" : "dark"),
+		},
+		...(user ? [{ id: "logout", label: m.common_logout(), run: () => void logout() }] : []),
+	];
 
-			<header className={styles.topbar}>
-				<button
+	return (
+		<div
+			className="group min-h-screen desktop:grid desktop:grid-cols-[280px_minmax(0,1fr)]"
+			data-nav-open={navOpen}
+		>
+			<SkipLink href="#main-content">{m.common_skip_to_content()}</SkipLink>
+
+			<CommandPalette
+				open={paletteOpen}
+				onClose={() => setPaletteOpen(false)}
+				commands={commands}
+				placeholder={m.palette_placeholder()}
+				emptyLabel={m.palette_empty()}
+			/>
+
+			<header className="sticky top-0 z-30 flex items-center gap-3 border-b border-edge bg-surface-tint px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3 desktop:hidden">
+				<IconButton
 					aria-controls="primary-navigation"
 					aria-expanded={navOpen}
 					aria-label={m.nav_open_menu()}
-					className={styles.iconButton}
 					onClick={() => setNavOpen((open) => !open)}
-					type="button"
 				>
 					<span aria-hidden="true">☰</span>
-				</button>
-				<Link className={cx(styles.brand, styles.brandCompact)} to="/">
-					<span className={styles.brandMark}>I</span>
-					<strong>Istudarne</strong>
-				</Link>
+				</IconButton>
+				<Brand to="/" />
 			</header>
 
-			{navOpen ? (
-				<button
-					aria-label={m.nav_close_menu()}
-					className={styles.backdrop}
-					onClick={() => setNavOpen(false)}
-					type="button"
-				/>
-			) : null}
+			{navOpen ? <Backdrop label={m.nav_close_menu()} onClick={closeNav} /> : null}
 
-			<aside className={styles.sidebar} id="primary-navigation" aria-label={m.nav_sections()}>
-				<Link className={styles.brand} to="/">
-					<span className={styles.brandMark}>I</span>
-					<span>
-						<strong>Istudarne</strong>
-						<small>{m.app_tagline()}</small>
-					</span>
-				</Link>
+			<aside
+				className="fixed inset-y-0 left-0 z-40 flex w-[min(86vw,300px)] translate-x-[-105%] flex-col gap-7 overflow-y-auto border-r border-edge bg-surface-tint p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] transition-transform duration-200 group-data-[nav-open=true]:translate-x-0 desktop:sticky desktop:top-0 desktop:h-screen desktop:w-auto desktop:translate-x-0 desktop:transition-none"
+				id="primary-navigation"
+				aria-label={m.nav_sections()}
+			>
+				<Brand to="/" tagline={m.app_tagline()} />
 
-				<nav className={styles.navList} aria-label={m.nav_sections()}>
+				<nav className="grid gap-1.5" aria-label={m.nav_sections()}>
 					{navItems.map((item) => (
-						<NavLink
-							key={item.to}
-							to={item.to}
-							end={item.end}
-							className={({ isActive }) => cx(styles.navLink, isActive && styles.activeLink)}
-							onClick={() => setNavOpen(false)}
-						>
+						<NavItem key={item.to} to={item.to} end={item.end} onNavigate={closeNav}>
 							{item.label}
-						</NavLink>
+						</NavItem>
 					))}
 					{user ? (
-						<NavLink
-							to={`/users/${user.username}`}
-							className={({ isActive }) => cx(styles.navLink, isActive && styles.activeLink)}
-							onClick={() => setNavOpen(false)}
-						>
+						<NavItem to={`/users/${user.username}`} onNavigate={closeNav}>
 							{m.nav_profile()}
-						</NavLink>
+						</NavItem>
 					) : null}
 				</nav>
 
-				<div className={styles.footer}>
-					{user ? (
-						<div className={styles.account}>
-							<span className={styles.accountAvatar} aria-hidden="true">
-								{user.displayName.slice(0, 1).toUpperCase()}
-							</span>
-							<span className={styles.accountMeta}>
-								<strong>{user.displayName}</strong>
-								<small>@{user.username}</small>
-							</span>
-						</div>
-					) : null}
+				<footer className="mt-auto grid gap-3 border-t border-edge pt-4.5">
+					{user ? <AccountBadge displayName={user.displayName} username={user.username} /> : null}
+
+					<button
+						className="flex min-h-10 cursor-pointer items-center justify-between rounded-field border border-edge bg-surface px-3 font-medium text-fg-muted hover:text-fg"
+						onClick={() => setPaletteOpen(true)}
+						type="button"
+					>
+						{m.palette_open()}
+						<kbd className="rounded-sm border border-edge bg-surface-muted px-1.5 py-0.5 text-[0.72rem]">
+							Ctrl K
+						</kbd>
+					</button>
 
 					<LanguageSwitcher />
 
-					<button
-						aria-pressed={theme === "dark"}
-						className={styles.themeToggle}
-						onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-						type="button"
-					>
-						{m.common_theme()}{" "}
-						<span>{theme === "dark" ? m.common_theme_dark() : m.common_theme_light()}</span>
-					</button>
+					<ThemeToggle
+						label={m.common_theme()}
+						valueLabel={theme === "dark" ? m.common_theme_dark() : m.common_theme_light()}
+						dark={theme === "dark"}
+						onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+					/>
 
 					{user ? (
 						<Button variant="ghost" onClick={() => logout()} type="button">
 							{m.common_logout()}
 						</Button>
 					) : null}
-				</div>
+				</footer>
 			</aside>
 
-			<main className={styles.main} id="main-content" tabIndex={-1}>
+			<main
+				className="px-4.5 pt-6 pb-[calc(4rem+env(safe-area-inset-bottom))] outline-none desktop:p-10"
+				id="main-content"
+				tabIndex={-1}
+			>
 				<Routes>
 					<Route index element={<DashboardPage />} />
 					<Route path="quizzes" element={<QuizzesPage />} />
@@ -165,12 +199,7 @@ export default function App() {
 	const location = useLocation();
 
 	if (loading) {
-		return (
-			<div className={styles.bootScreen} role="status" aria-live="polite">
-				<span className={styles.brandMark}>I</span>
-				<p>{m.boot_loading()}</p>
-			</div>
-		);
+		return <BootScreen>{m.boot_loading()}</BootScreen>;
 	}
 
 	if (!user) {

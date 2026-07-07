@@ -1,54 +1,54 @@
 # Istudarne
 
-Plataforma de estudo gamificado em construção. O repositório agora mantém duas camadas:
+Gamified, quiz-based study platform running entirely on Cloudflare Workers.
 
-- `mvp/`: versão estática original em HTML, CSS e JavaScript puro, publicada no GitHub Pages pelo workflow atual.
-- `app/` + `worker/`: nova aplicação React SPA com API Hono em Cloudflare Workers.
+- `app/` + `worker/`: React SPA + Hono API deployed as a single Worker.
+- `mvp/`: the original static HTML/JS prototype (kept for reference, published
+  via GitHub Pages).
 
-## Arquitetura nova
+## Architecture
 
 ```text
-React SPA
-├─ /app/*                 interface autenticada, dashboard, quizzes e grupos
-├─ app/lib/               cliente de API, schemas e código compartilhado
-└─ app/pages/             telas iniciais
+worker/                   backend (Hono) — independent from app/
+├─ /                      server-rendered landing page (SEO, JSON-LD)
+├─ /share/quizzes/:id     server-rendered share pages for link embeds
+├─ /llms.txt              entry point for AI agents / RAG pipelines
+├─ /docs + /openapi.json  Swagger UI + OpenAPI spec generated from code
+├─ /api/*                 JSON API (contracts validated with Zod)
+└─ server/                D1 + Drizzle, R2, Durable Objects, services
 
-Hono Worker
-├─ /                      landing page renderizada no Worker
-├─ /share/quizzes/:id     página SSR para compartilhamento e metatags
-├─ /docs                  Swagger UI gerado pelas rotas Hono/OpenAPI
-├─ /openapi.json          especificação OpenAPI gerada do código
-├─ /api/*                 API JSON
-├─ D1 + Drizzle           dados relacionais, schema e migrations
-├─ R2                     JSON original enviado pelo usuário
-└─ Durable Objects        base para chat em tempo real
+shared/                   the only code both sides import
+├─ contracts/             Zod schemas + types
+└─ paraglide/             generated i18n messages
+
+app/                      React SPA (/app/*) — talks to worker via HTTP only
+├─ components/            base components in 4 categories (containers,
+│                         navigation, controls, feedback) — all styling here
+├─ pages/                 screens composed from base components
+└─ lib/                   typed API client (VITE_API_BASE aware), auth, i18n
 ```
 
-## Rodar localmente
+Full documentation lives in [docs/](docs/README.md): architecture recipe,
+design system (Obsidian-like theme), SSR/SEO, and AI/RAG integration.
 
-Instale dependências:
+## Local development
 
 ```bash
 npm install
+npm run db:migrate:local   # create the local D1 database
+npm run dev                # Vite + Workers runtime
 ```
 
-Crie o banco local e aplique migrations:
+Useful scripts: `npm run typecheck`, `npm run check` (Biome lint + format),
+`npm run build`, `npm run deploy` (see [DEPLOY_CLOUDFLARE.md](DEPLOY_CLOUDFLARE.md)).
 
-```bash
-npm run db:migrate:local
-```
+## Status
 
-Inicie o ambiente:
+Implemented: auth with HTTP-only session cookies, JSON quiz upload (R2 + D1),
+quiz player with persisted attempts/answers, stats dashboard, public search,
+profiles with follow, groups with realtime chat, publish/unpublish, i18n
+(pt-BR/en), light/dark themes, command palette (Ctrl/Cmd+K).
 
-```bash
-npm run dev
-```
-
-## Próximos passos de implementação
-
-- autenticação real com cookie HTTP-only;
-- tela de quiz carregando questões reais por API;
-- persistência de tentativas e respostas;
-- busca por tags;
-- perfis públicos;
-- grupos e chat WebSocket via Durable Objects.
+Next (see [APP_GAMIFICADO_SERVERLESS.md](APP_GAMIFICADO_SERVERLESS.md)):
+achievements and leaderboards, tag-based search filters, password recovery,
+semantic search with Vectorize, audio rooms.

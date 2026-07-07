@@ -1,4 +1,4 @@
-import { AppError } from "../../../app/lib/server/errors";
+import { AppError } from "@server/errors";
 import type { App } from "../../env";
 import { container, currentUser } from "../../http/context";
 import { uploadQuizRoute } from "../../openapi";

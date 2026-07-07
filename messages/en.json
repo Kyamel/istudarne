@@ -66,6 +66,7 @@
 	"visibility_public": "Public",
 	"visibility_private": "Private",
 	"visibility_unlisted": "Unlisted",
+	"visibility_invite": "Invite only",
 	"upload_eyebrow": "Import",
 	"upload_title": "Upload question bank",
 	"upload_subtitle": "The file is validated, stored in R2 and normalized in D1 for search, stats and attempts.",
@@ -132,5 +133,10 @@
 	"notfound_eyebrow": "Error 404",
 	"notfound_title": "Page not found",
 	"notfound_subtitle": "The content you are looking for doesn't exist or was moved.",
-	"notfound_home": "Back to dashboard"
+	"notfound_home": "Back to dashboard",
+	"palette_open": "Command palette",
+	"palette_placeholder": "Type a command or search…",
+	"palette_empty": "No matching commands.",
+	"palette_go": "Go to: {target}",
+	"palette_theme_toggle": "Toggle theme"
 }

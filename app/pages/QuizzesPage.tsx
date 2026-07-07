@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
-import { ButtonLink, Muted, Page, PageHeader, QuizCard, Tabs } from "../components";
+import {
+	ButtonLink,
+	ContentGrid,
+	Field,
+	Muted,
+	Page,
+	PageHeader,
+	QuizCard,
+	Tabs,
+} from "../components";
 import type { QuizSummary } from "../lib/api";
 import { fetchMyQuizzes, searchQuizzes } from "../lib/api";
 import { m } from "../lib/i18n";
-import styles from "./QuizzesPage.module.css";
 
 type Tab = "public" | "mine";
 
@@ -70,24 +78,22 @@ export default function QuizzesPage() {
 			/>
 
 			{tab === "public" ? (
-				<label className={styles.search}>
-					<span>{m.quizzes_search_label()}</span>
-					<input
-						value={query}
-						onChange={(event) => setQuery(event.target.value)}
-						placeholder={m.quizzes_search_placeholder()}
-						type="search"
-					/>
-				</label>
+				<Field
+					label={m.quizzes_search_label()}
+					value={query}
+					onChange={(event) => setQuery(event.target.value)}
+					placeholder={m.quizzes_search_placeholder()}
+					type="search"
+				/>
 			) : null}
 
 			{status ? <Muted>{status}</Muted> : null}
 
-			<div className={styles.grid}>
+			<ContentGrid>
 				{quizzes.map((quiz) => (
 					<QuizCard key={quiz.id} quiz={quiz} />
 				))}
-			</div>
+			</ContentGrid>
 		</Page>
 	);
 }

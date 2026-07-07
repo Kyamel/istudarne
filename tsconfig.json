@@ -8,7 +8,9 @@
 		"moduleResolution": "Bundler",
 		"jsx": "react-jsx",
 		"paths": {
-			"~/*": ["./app/*"]
+			"~/*": ["./app/*"],
+			"@shared/*": ["./shared/*"],
+			"@server/*": ["./worker/server/*"]
 		},
 		"esModuleInterop": true,
 		"verbatimModuleSyntax": true,

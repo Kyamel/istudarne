@@ -1,10 +1,19 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useState } from "react";
-import { Button, Field, LanguageSwitcher, StatusMessage } from "../components";
+import {
+	Brand,
+	Button,
+	CenteredCard,
+	CenteredScreen,
+	Field,
+	LanguageSwitcher,
+	Row,
+	StatusMessage,
+	Tabs,
+} from "../components";
 import { ApiError } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { m } from "../lib/i18n";
-import styles from "./LoginPage.module.css";
 
 type Mode = "login" | "register";
 
@@ -18,7 +27,7 @@ export default function LoginPage() {
 	const [error, setError] = useState("");
 	const [busy, setBusy] = useState(false);
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setError("");
 		setBusy(true);
@@ -35,45 +44,29 @@ export default function LoginPage() {
 	}
 
 	return (
-		<div className={styles.screen}>
-			<section className={styles.card} aria-labelledby="auth-title">
-				<div className={styles.top}>
-					<div className={styles.brand}>
-						<span className={styles.brandMark}>I</span>
-						<div>
-							<strong>Istudarne</strong>
-							<small>{m.app_tagline()}</small>
-						</div>
-					</div>
+		<CenteredScreen>
+			<CenteredCard labelledBy="auth-title">
+				<Row justify="between">
+					<Brand tagline={m.app_tagline()} />
 					<LanguageSwitcher />
-				</div>
+				</Row>
 
-				<div className={styles.tabs} role="tablist" aria-label="Istudarne">
-					<button
-						aria-selected={mode === "login"}
-						className={styles.tab}
-						onClick={() => setMode("login")}
-						role="tab"
-						type="button"
-					>
-						{m.auth_tab_login()}
-					</button>
-					<button
-						aria-selected={mode === "register"}
-						className={styles.tab}
-						onClick={() => setMode("register")}
-						role="tab"
-						type="button"
-					>
-						{m.auth_tab_register()}
-					</button>
-				</div>
+				<Tabs<Mode>
+					label="Istudarne"
+					value={mode}
+					onChange={setMode}
+					grow
+					options={[
+						{ value: "login", label: m.auth_tab_login() },
+						{ value: "register", label: m.auth_tab_register() },
+					]}
+				/>
 
-				<h1 className={styles.title} id="auth-title">
+				<h1 className="text-[1.6rem]" id="auth-title">
 					{mode === "login" ? m.auth_login_title() : m.auth_register_title()}
 				</h1>
 
-				<form className={styles.form} onSubmit={handleSubmit}>
+				<form className="grid gap-3.5" onSubmit={handleSubmit}>
 					{mode === "register" ? (
 						<>
 							<Field
@@ -129,10 +122,10 @@ export default function LoginPage() {
 					</Button>
 				</form>
 
-				<p className={styles.hint}>
+				<p className="text-center text-[0.88rem] text-fg-muted">
 					{mode === "login" ? m.auth_hint_login() : m.auth_hint_register()}
 				</p>
-			</section>
-		</div>
+			</CenteredCard>
+		</CenteredScreen>
 	);
 }

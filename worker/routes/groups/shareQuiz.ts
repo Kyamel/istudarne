@@ -1,4 +1,4 @@
-import { shareQuizRequestSchema } from "../../../app/lib/contracts";
+import { shareQuizRequestSchema } from "@shared/contracts";
 import type { App } from "../../env";
 import { container, requireUser } from "../../http/context";
 import { readBody } from "../../http/validate";

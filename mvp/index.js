@@ -1,129 +1,283 @@
 /* ===================================================================
    Quiz IHC - tela inicial (index.js)
-   Mostra título/descrição, navega para quiz.html / list.html, permite
-   continuar de onde parou, carregar outro JSON e limpar o progresso.
+   Biblioteca local de quizzes: banco padrão + uploads salvos no
+   localStorage, com progresso independente por quiz.
    =================================================================== */
 
 (() => {
 	const $ = (id) => document.getElementById(id);
+	let defaultData = null;
+
+	function quizUrl(page, id, extra) {
+		const params = new URLSearchParams();
+		params.set("quiz", id);
+		if (extra) {
+			Object.entries(extra).forEach(([key, value]) => {
+				params.set(key, value);
+			});
+		}
+		return `${page}?${params.toString()}`;
+	}
+
+	function showError(targetId, title, details) {
+		const box = $(targetId);
+		const list = Array.isArray(details) ? details : [details].filter(Boolean);
+		box.classList.remove("hidden");
+		box.innerHTML =
+			`<strong>${Quiz.escapeHtml(title)}</strong>` +
+			(list.length
+				? `<ul>${list.map((item) => `<li>${Quiz.escapeHtml(item)}</li>`).join("")}</ul>`
+				: "");
+	}
+
+	function clearError(targetId) {
+		const box = $(targetId);
+		box.classList.add("hidden");
+		box.innerHTML = "";
+	}
+
+	function formatDate(ts) {
+		if (!ts) return "";
+		return new Intl.DateTimeFormat("pt-BR", {
+			day: "2-digit",
+			month: "2-digit",
+			year: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		}).format(new Date(ts));
+	}
+
+	function questionCount(n) {
+		return `${n} ${n === 1 ? "questão" : "questões"}`;
+	}
+
+	function entryData(entry) {
+		return entry.id === Quiz.DEFAULT_ID ? defaultData : Quiz.library.getData(entry.id);
+	}
+
+	function buildEntries() {
+		const fallback = {
+			title: "Banco padrão",
+			description: "Arquivo questions.json do MVP.",
+			questions: [],
+		};
+		const data = defaultData || fallback;
+		return [
+			{
+				id: Quiz.DEFAULT_ID,
+				title: data.title || fallback.title,
+				description: data.description || fallback.description,
+				count: data.questions.length || 0,
+				savedAt: null,
+				isDefault: true,
+			},
+			...Quiz.library.list().map((entry) => ({ ...entry, isDefault: false })),
+		];
+	}
 
 	function render() {
-		$("start-title").textContent = Quiz.DATA.title || "Quiz";
-		$("start-description").textContent = Quiz.DATA.description || "";
+		const entries = buildEntries();
+		const box = $("quiz-library");
+		box.innerHTML = "";
 
-		// Há respostas salvas? Então mostramos "Continuar" e "Limpar".
-		const hasProgress = Object.keys(Quiz.state.answers).length > 0;
-		$("start-resume").classList.toggle("hidden", !hasProgress);
-		$("btn-resume").classList.toggle("hidden", !hasProgress);
-		$("btn-clear").classList.toggle("hidden", !hasProgress);
+		entries.forEach((entry) => {
+			const data = entryData(entry);
+			const questions = data?.questions || [];
+			const summary = Quiz.library.progressSummary(
+				entry.id,
+				questions.length ? questions : entry.count,
+			);
+			box.appendChild(buildCard(entry, summary));
+		});
 
-		// Indica qual banco está em uso (padrão ou enviado).
-		const custom = Quiz.usesUploadedData();
-		$("bank-status").textContent = custom
-			? `Banco em uso: enviado por você (${Quiz.QUESTIONS.length} questões).`
-			: `Banco em uso: padrão (${Quiz.QUESTIONS.length} questões).`;
-		$("btn-default-bank").classList.toggle("hidden", !custom);
+		$("btn-delete-all").classList.toggle("hidden", Quiz.library.list().length === 0);
 	}
 
-	// "Começar quiz": abre o Quiz com TODAS as questões, sem apagar nada.
-	function goQuizAll() {
-		Quiz.state.runIds = Quiz.QUESTIONS.map((q) => q.id);
-		Quiz.state.onlyWrong = false;
-		Quiz.state.mode = "quiz";
-		Quiz.save();
-		location.href = "quiz.html";
-	}
+	function buildCard(entry, summary) {
+		const card = document.createElement("article");
+		card.className = "library-card";
+		card.dataset.quizId = entry.id;
 
-	function goList() {
-		Quiz.state.mode = "list";
-		Quiz.save();
-		location.href = "list.html";
-	}
+		const answeredText = summary.total
+			? `${summary.answered} de ${summary.total} respondidas`
+			: questionCount(summary.answered);
+		const scoreText = summary.corrected
+			? `Corrigido: ${summary.correct} acerto(s)`
+			: "Ainda não corrigido";
 
-	// "Continuar": volta para a última tela usada.
-	function resume() {
-		if (Quiz.state.mode === "list") return goList();
-		if (Quiz.state.corrected) {
-			location.href = "quiz.html?view=result";
-			return;
+		card.innerHTML =
+			'<div class="library-card-main">' +
+			`<p class="topic-tag">${entry.isDefault ? "Padrão" : "Salvo"}</p>` +
+			`<h3>${Quiz.escapeHtml(entry.title)}</h3>` +
+			`<p class="muted">${Quiz.escapeHtml(entry.description || "Sem descrição.")}</p>` +
+			'<div class="library-meta">' +
+			`<span>${questionCount(entry.count || summary.total || 0)}</span>` +
+			(summary.hasProgress
+				? `<span>${answeredText}</span><span>${scoreText}</span>`
+				: "<span>Sem progresso</span>") +
+			(entry.savedAt
+				? `<span>Salvo em ${formatDate(entry.savedAt)}</span>`
+				: "<span>Banco incluído no app</span>") +
+			"</div>" +
+			"</div>";
+
+		const actions = document.createElement("div");
+		actions.className = "library-actions";
+
+		actions.appendChild(
+			actionButton(summary.hasProgress ? "Continuar" : "Começar", "btn btn-primary", () => {
+				startQuiz(entry.id, !summary.hasProgress);
+			}),
+		);
+		actions.appendChild(actionLink("Lista", "btn", quizUrl("list.html", entry.id)));
+		actions.appendChild(
+			actionButton("Resetar progresso", "btn btn-ghost", () => resetProgress(entry.id), {
+				disabled: !summary.hasProgress,
+			}),
+		);
+		if (!entry.isDefault) {
+			actions.appendChild(
+				actionButton("Excluir", "btn btn-ghost danger-text", () =>
+					deleteQuiz(entry.id, entry.title),
+				),
+			);
 		}
-		location.href = "quiz.html";
+
+		card.appendChild(actions);
+		return card;
 	}
 
-	function clearProgress() {
-		if (!Quiz.confirmWipe()) return;
-		Quiz.resetAll();
-		$("file-status").textContent = "✓ Progresso apagado.";
+	function actionButton(label, className, onClick, options = {}) {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = className;
+		button.textContent = label;
+		button.disabled = !!options.disabled;
+		button.addEventListener("click", onClick);
+		return button;
+	}
+
+	function actionLink(label, className, href) {
+		const link = document.createElement("a");
+		link.className = className;
+		link.href = href;
+		link.textContent = label;
+		return link;
+	}
+
+	function startQuiz(id, fresh) {
+		Quiz.library.setActive(id);
+		if (fresh) Quiz.resetProgress(id);
+		location.href = quizUrl("quiz.html", id);
+	}
+
+	async function resetProgress(id) {
+		const ok = await Quiz.ui.confirm({
+			title: "Resetar progresso",
+			message: "Isto apaga respostas, revisões e resultado salvo apenas deste quiz.",
+			confirmLabel: "Resetar",
+			danger: true,
+		});
+		if (!ok) return;
+		Quiz.resetProgress(id);
+		Quiz.ui.toast("Progresso resetado.", "success");
 		render();
+	}
+
+	async function deleteQuiz(id, title) {
+		const ok = await Quiz.ui.confirm({
+			title: "Excluir quiz salvo",
+			message: `O quiz "${title}" será removido deste navegador junto com o progresso dele.`,
+			confirmLabel: "Excluir",
+			danger: true,
+		});
+		if (!ok) return;
+		Quiz.library.remove(id);
+		Quiz.ui.toast("Quiz excluído.", "success");
+		render();
+	}
+
+	async function deleteAllSaved() {
+		const count = Quiz.library.list().length;
+		if (count === 0) return;
+		const ok = await Quiz.ui.confirm({
+			title: "Excluir todos os quizzes salvos",
+			message: `Isto remove ${count} quiz(es) importado(s) e seus progressos. O banco padrão continua disponível.`,
+			confirmLabel: "Excluir todos",
+			danger: true,
+		});
+		if (!ok) return;
+		Quiz.library.removeAll();
+		Quiz.ui.toast("Quizzes salvos excluídos.", "success");
+		render();
+	}
+
+	function setUploadStatus(message, type) {
+		const el = $("file-status");
+		el.textContent = message || "";
+		el.dataset.type = type || "info";
 	}
 
 	function handleFileUpload(e) {
 		const file = e.target.files?.[0];
+		clearError("file-errors");
 		if (!file) return;
+
+		setUploadStatus("Lendo arquivo...", "info");
 		const reader = new FileReader();
+
+		reader.onerror = () => {
+			setUploadStatus("");
+			showError("file-errors", "Não foi possível ler o arquivo.", [
+				"Tente selecionar o JSON novamente.",
+			]);
+		};
+
 		reader.onload = () => {
 			try {
 				const data = JSON.parse(reader.result);
-				if (!data || !Array.isArray(data.questions) || data.questions.length === 0) {
-					throw new Error('o arquivo precisa ter um campo "questions" com ao menos uma questão.');
+				const result = Quiz.library.add(data, file.name.replace(/\.json$/i, ""));
+				if (!result.ok) {
+					setUploadStatus("");
+					showError("file-errors", "JSON inválido", result.errors);
+					return;
 				}
-				if (Object.keys(Quiz.state.answers).length > 0) {
-					const ok = confirm(
-						"⚠️ SUBSTITUIR BANCO DE QUESTÕES\n\n" +
-							"Carregar este arquivo vai trocar as questões atuais e APAGAR " +
-							"todo o seu progresso salvo. Isto não pode ser desfeito.\n\n" +
-							"Deseja continuar?",
-					);
-					if (!ok) {
-						$("file-json").value = "";
-						return;
-					}
-				}
-				Quiz.setUploadedData(data); // aplica E persiste o banco enviado
-				Quiz.resetAll(); // zera o progresso para o novo banco
-				$("file-status").textContent =
-					`✓ Carregado: ${Quiz.QUESTIONS.length} questões de ${file.name}`;
+				$("file-json").value = "";
+				setUploadStatus(
+					`Salvo: ${questionCount(data.questions.length)} de ${file.name}.`,
+					"success",
+				);
+				Quiz.ui.toast("Quiz salvo na biblioteca local.", "success");
 				render();
 			} catch (err) {
-				$("file-status").textContent = `✗ JSON inválido: ${err.message}`;
+				setUploadStatus("");
+				showError("file-errors", "JSON inválido", [
+					err instanceof Error ? err.message : "Confira a sintaxe do arquivo.",
+				]);
 			}
 		};
+
 		reader.readAsText(file, "utf-8");
 	}
 
-	// Descarta o banco enviado e volta ao questions.json padrão.
-	function useDefaultBank() {
-		const ok = confirm(
-			"Voltar ao banco padrão\n\n" +
-				"Isto vai descartar o banco de questões que você enviou e também o " +
-				"progresso atual, voltando ao questions.json padrão.\n\nDeseja continuar?",
-		);
-		if (!ok) return;
-		Quiz.clearData();
-		Quiz.clear();
-		location.reload(); // recarrega para buscar o questions.json padrão
-	}
-
 	function bind() {
-		$("btn-start").addEventListener("click", goQuizAll);
-		$("btn-open-list").addEventListener("click", goList);
-		$("btn-resume").addEventListener("click", resume);
-		$("btn-clear").addEventListener("click", clearProgress);
 		$("file-json").addEventListener("change", handleFileUpload);
-		$("btn-default-bank").addEventListener("click", useDefaultBank);
+		$("btn-delete-all").addEventListener("click", deleteAllSaved);
 	}
 
 	async function init() {
 		bind();
-		const r = await Quiz.load();
-		if (!r.ok) {
-			$("start-title").textContent = "Carregue um arquivo de questões";
-			$("start-description").textContent =
-				"Não foi possível ler questions.json automaticamente. Se você abriu " +
-				"o index.html direto (file://), use um servidor local (veja o README) " +
-				"ou carregue um arquivo .json abaixo.";
-			// Mesmo sem fetch, o upload abaixo continua funcionando.
-			return;
+		const loaded = await Quiz.load();
+		try {
+			defaultData = await Quiz.library.getDefaultData();
+		} catch (_e) {
+			defaultData = Quiz.quizId === Quiz.DEFAULT_ID ? Quiz.DATA : null;
+		}
+		if (!loaded.ok && Quiz.library.list().length === 0) {
+			showError("load-error", "Não foi possível carregar o questions.json", [
+				"Se você abriu por file://, rode um servidor local simples.",
+				"Você ainda pode adicionar quizzes selecionando um arquivo JSON abaixo.",
+			]);
 		}
 		render();
 	}

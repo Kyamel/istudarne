@@ -1,6 +1,6 @@
+import { AppError } from "@server/errors";
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-import { AppError } from "../../app/lib/server/errors";
 
 /** Converts domain errors (AppError) into consistent JSON responses. */
 export function handleError(error: Error, c: Context) {

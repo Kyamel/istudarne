@@ -6,6 +6,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    paths:
+      - "mvp/**"
+      - ".github/workflows/deploy-static.yml"
   workflow_dispatch:
 
 # Permissões necessárias para o deploy do Pages.
@@ -16,7 +19,7 @@ permissions:
 
 # Garante um deploy por vez (cancela execuções antigas em andamento).
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

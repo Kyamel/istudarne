@@ -1,4 +1,4 @@
-import { registerRequestSchema } from "../../../app/lib/contracts";
+import { registerRequestSchema } from "@shared/contracts";
 import type { App } from "../../env";
 import { container } from "../../http/context";
 import { setSessionCookie } from "../../http/cookies";

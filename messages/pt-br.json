@@ -66,6 +66,7 @@
 	"visibility_public": "Público",
 	"visibility_private": "Privado",
 	"visibility_unlisted": "Não listado",
+	"visibility_invite": "Por convite",
 	"upload_eyebrow": "Importação",
 	"upload_title": "Enviar banco de questões",
 	"upload_subtitle": "O arquivo é validado, salvo no R2 e normalizado no D1 para busca, estatísticas e tentativas.",
@@ -132,5 +133,10 @@
 	"notfound_eyebrow": "Erro 404",
 	"notfound_title": "Página não encontrada",
 	"notfound_subtitle": "O conteúdo que você procura não existe ou foi movido.",
-	"notfound_home": "Voltar ao painel"
+	"notfound_home": "Voltar ao painel",
+	"palette_open": "Paleta de comandos",
+	"palette_placeholder": "Digite um comando ou pesquise…",
+	"palette_empty": "Nenhum comando encontrado.",
+	"palette_go": "Ir para: {target}",
+	"palette_theme_toggle": "Alternar tema"
 }

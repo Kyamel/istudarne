@@ -1,57 +1,65 @@
-/* Design tokens (colors, shadows, radii). This is the single source of truth.
-   Imported by app.css and each CSS module file. */
+/* Design tokens (colors, shadows, radii). This is the single source of truth
+   for the visual theme. Tailwind utilities reference these variables through
+   the @theme mapping in app.css, so switching light/dark only swaps variables.
+
+   Direction: Obsidian-like "matte utility" look — near-neutral grays separated
+   by small tonal steps rather than strong borders, a single violet accent
+   reserved for selection, focus, links and primary actions, subtle radii and
+   soft shadows. Semantic colors (danger/warning/success) stay desaturated. */
 
 :root {
-	--bg: #eef1ec;
-	--surface: #f8faf6;
-	--surface-muted: #e3e8df;
+	--bg: #f6f6f6;
+	--surface: #ffffff;
+	--surface-muted: #ececec;
 	--surface-raised: #ffffff;
-	--text: #161d18;
-	--text-muted: #566159;
-	--text-soft: #8a958c;
-	--border: #d2dacd;
-	--border-strong: #b6c1b0;
-	--primary: #2f6a43;
-	--primary-hover: #245636;
-	--primary-soft: #d8e6da;
-	--secondary: #8a6d2e;
-	--secondary-soft: #ece1c6;
-	--danger: #a8463f;
-	--danger-soft: #f3dad6;
-	--warning: #9a6a17;
-	--warning-soft: #f3e7c4;
-	--success: #2f7d4f;
-	--success-soft: #d8ecdd;
-	--shadow: rgba(15, 25, 18, 0.1);
-	--shadow-lg: rgba(15, 25, 18, 0.18);
-	--focus-ring: rgba(47, 106, 67, 0.45);
-	--radius-sm: 10px;
-	--radius-md: 14px;
-	--radius-lg: 20px;
+	--surface-tint: #efefef;
+	--text: #222222;
+	--text-muted: #6a6a6a;
+	--text-soft: #9a9a9a;
+	--border: #e2e2e2;
+	--border-strong: #c9c9c9;
+	--primary: #7c3aed;
+	--primary-hover: #6d28d9;
+	--primary-soft: #ede9fe;
+	--secondary: #6a6a6a;
+	--secondary-soft: #ececec;
+	--danger: #c24f4f;
+	--danger-soft: #f7e0e0;
+	--warning: #a87b2f;
+	--warning-soft: #f4ead4;
+	--success: #4f9d69;
+	--success-soft: #def0e4;
+	--shadow: rgba(0, 0, 0, 0.07);
+	--shadow-lg: rgba(0, 0, 0, 0.14);
+	--focus-ring: rgba(124, 58, 237, 0.4);
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 12px;
 }
 
 :root[data-theme="dark"] {
-	--bg: #0c100d;
-	--surface: #141b16;
-	--surface-muted: #1a221c;
-	--surface-raised: #18211a;
-	--text: #e7efe6;
-	--text-muted: #9aaf9f;
-	--text-soft: #6a7e70;
-	--border: #243029;
-	--border-strong: #354840;
-	--primary: #36925b;
-	--primary-hover: #45b370;
-	--primary-soft: #15281c;
-	--secondary: #c9a24a;
-	--secondary-soft: #2c2614;
-	--danger: #d97a72;
-	--danger-soft: #341f1d;
-	--warning: #cf9a40;
-	--warning-soft: #2e2614;
-	--success: #4cae74;
-	--success-soft: #14271c;
-	--shadow: rgba(0, 0, 0, 0.45);
-	--shadow-lg: rgba(0, 0, 0, 0.6);
-	--focus-ring: rgba(69, 179, 112, 0.45);
+	--bg: #202020;
+	--surface: #262626;
+	--surface-muted: #1c1c1c;
+	--surface-raised: #2d2d2d;
+	--surface-tint: #191919;
+	--text: #dcddde;
+	--text-muted: #999999;
+	--text-soft: #6f6f6f;
+	--border: #363636;
+	--border-strong: #4a4a4a;
+	--primary: #7c3aed;
+	--primary-hover: #8b5cf6;
+	--primary-soft: #2a2144;
+	--secondary: #a3a3a3;
+	--secondary-soft: #2e2e2e;
+	--danger: #e06c75;
+	--danger-soft: #3a2628;
+	--warning: #d19a66;
+	--warning-soft: #3a2f22;
+	--success: #98c379;
+	--success-soft: #2a3324;
+	--shadow: rgba(0, 0, 0, 0.3);
+	--shadow-lg: rgba(0, 0, 0, 0.5);
+	--focus-ring: rgba(139, 92, 246, 0.5);
 }

@@ -12,11 +12,13 @@
     <!-- Barra superior: troca de modo -->
     <div class="topbar">
       <div class="tabs">
-        <a class="tab is-active" href="quiz.html">Quiz</a>
-        <a class="tab" href="list.html">Lista</a>
+        <a id="tab-quiz" class="tab is-active" href="quiz.html">Quiz</a>
+        <a id="tab-list" class="tab" href="list.html">Lista</a>
       </div>
       <a class="btn btn-ghost btn-sm" href="index.html">Início</a>
     </div>
+
+    <div id="load-error" class="error-panel hidden" role="alert"></div>
 
     <!-- ===== Tela do Quiz ===== -->
     <section id="screen-quiz" class="screen">
@@ -39,8 +41,8 @@
       </article>
 
       <nav class="actions">
-        <button id="btn-prev" class="btn" type="button">← Anterior</button>
-        <button id="btn-next" class="btn" type="button">Próxima →</button>
+        <button id="btn-prev" class="btn" type="button">Anterior</button>
+        <button id="btn-next" class="btn" type="button">Próxima</button>
         <button id="btn-correct" class="btn btn-primary" type="button">Corrigir</button>
         <button id="btn-restart" class="btn btn-ghost" type="button">Reiniciar</button>
       </nav>

@@ -3,12 +3,13 @@ import { useParams } from "react-router-dom";
 import {
 	Avatar,
 	Button,
-	Eyebrow,
+	ListItem,
 	Loading,
 	MetricCard,
 	MetricsGrid,
 	Muted,
 	Page,
+	PageHeader,
 	Panel,
 	SimpleList,
 	StatusMessage,
@@ -17,7 +18,6 @@ import type { Profile } from "../lib/api";
 import { fetchProfile, setFollow } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { m } from "../lib/i18n";
-import styles from "./ProfilePage.module.css";
 
 export default function ProfilePage() {
 	const { username } = useParams();
@@ -78,25 +78,26 @@ export default function ProfilePage() {
 
 	return (
 		<Page>
-			<header className={styles.header}>
-				<Avatar name={profile.displayName} />
-				<div className={styles.meta}>
-					<Eyebrow>{m.profile_eyebrow()}</Eyebrow>
-					<h1>{profile.displayName}</h1>
-					<Muted>@{profile.username}</Muted>
-					{profile.bio ? <p>{profile.bio}</p> : null}
-				</div>
-				{isSelf ? null : (
-					<Button
-						aria-pressed={profile.isFollowing}
-						variant={profile.isFollowing ? "default" : "primary"}
-						disabled={busy}
-						onClick={toggleFollow}
-					>
-						{profile.isFollowing ? m.profile_following() : m.profile_follow()}
-					</Button>
-				)}
-			</header>
+			<PageHeader
+				eyebrow={m.profile_eyebrow()}
+				title={profile.displayName}
+				leading={<Avatar name={profile.displayName} />}
+				actions={
+					isSelf ? null : (
+						<Button
+							aria-pressed={profile.isFollowing}
+							variant={profile.isFollowing ? "default" : "primary"}
+							disabled={busy}
+							onClick={toggleFollow}
+						>
+							{profile.isFollowing ? m.profile_following() : m.profile_follow()}
+						</Button>
+					)
+				}
+			>
+				<Muted>@{profile.username}</Muted>
+				{profile.bio ? <p className="mt-2">{profile.bio}</p> : null}
+			</PageHeader>
 
 			<MetricsGrid>
 				<MetricCard label={m.profile_metric_questions()} value={profile.stats.questionsTotal} />
@@ -105,17 +106,18 @@ export default function ProfilePage() {
 				<MetricCard label={m.profile_metric_following()} value={profile.following} />
 			</MetricsGrid>
 
-			<Panel>
-				<h2>{m.profile_published()}</h2>
+			<Panel title={m.profile_published()}>
 				{profile.quizzes.length === 0 ? (
 					<Muted>{m.profile_no_quizzes()}</Muted>
 				) : (
 					<SimpleList>
 						{profile.quizzes.map((quiz) => (
-							<li key={quiz.id}>
+							<ListItem
+								key={quiz.id}
+								trailing={<small>{m.quiz_card_questions({ count: quiz.questionCount })}</small>}
+							>
 								<a href={`/app/quizzes/${quiz.id}/play`}>{quiz.title}</a>
-								<small>{m.quiz_card_questions({ count: quiz.questionCount })}</small>
-							</li>
+							</ListItem>
 						))}
 					</SimpleList>
 				)}

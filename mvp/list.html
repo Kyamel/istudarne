@@ -12,11 +12,13 @@
     <!-- Barra superior: troca de modo -->
     <div class="topbar">
       <div class="tabs">
-        <a class="tab" href="quiz.html">Quiz</a>
-        <a class="tab is-active" href="list.html">Lista</a>
+        <a id="tab-quiz" class="tab" href="quiz.html">Quiz</a>
+        <a id="tab-list" class="tab is-active" href="list.html">Lista</a>
       </div>
       <a class="btn btn-ghost btn-sm" href="index.html">Início</a>
     </div>
+
+    <div id="load-error" class="error-panel hidden" role="alert"></div>
 
     <section id="screen-list" class="screen">
       <div class="list-filters">

@@ -3,6 +3,7 @@ import {
 	ButtonLink,
 	CheckList,
 	ContentGrid,
+	ListItem,
 	MetricCard,
 	MetricSkeleton,
 	MetricsGrid,
@@ -82,32 +83,34 @@ export default function DashboardPage() {
 			</MetricsGrid>
 
 			<ContentGrid>
-				<Panel>
-					<h2>{m.dashboard_recent_history()}</h2>
+				<Panel title={m.dashboard_recent_history()}>
 					{history.length === 0 ? (
 						<Muted>{m.dashboard_no_history()}</Muted>
 					) : (
 						<SimpleList>
 							{history.slice(0, 6).map((entry) => (
-								<li key={entry.attemptId}>
-									<div>
-										<a href={`/app/quizzes/${entry.quizId}/play`}>{entry.quizTitle}</a>
-										<small>{formatDate(entry.startedAt)}</small>
-									</div>
-									<StatusTag tone={entry.status === "finished" ? "ok" : "pending"}>
-										{entry.status === "finished"
-											? `${entry.correctCount}/${entry.correctCount + entry.wrongCount}`
-											: "…"}
-									</StatusTag>
-								</li>
+								<ListItem
+									key={entry.attemptId}
+									trailing={
+										<StatusTag tone={entry.status === "finished" ? "ok" : "pending"}>
+											{entry.status === "finished"
+												? `${entry.correctCount}/${entry.correctCount + entry.wrongCount}`
+												: "…"}
+										</StatusTag>
+									}
+								>
+									<a href={`/app/quizzes/${entry.quizId}/play`}>{entry.quizTitle}</a>
+									<small>{formatDate(entry.startedAt)}</small>
+								</ListItem>
 							))}
 						</SimpleList>
 					)}
-					<ButtonLink to="/quizzes">{m.dashboard_view_library()}</ButtonLink>
+					<ButtonLink className="justify-self-start" to="/quizzes">
+						{m.dashboard_view_library()}
+					</ButtonLink>
 				</Panel>
 
-				<Panel>
-					<h2>{m.dashboard_week_focus()}</h2>
+				<Panel title={m.dashboard_week_focus()}>
 					<CheckList>
 						<li>{m.dashboard_no_history()}</li>
 					</CheckList>

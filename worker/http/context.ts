@@ -1,7 +1,7 @@
+import type { Container } from "@server/container";
+import type { AuthUser } from "@server/domain/types";
+import { unauthorized } from "@server/errors";
 import type { Context } from "hono";
-import type { Container } from "../../app/lib/server/container";
-import type { AuthUser } from "../../app/lib/server/domain/types";
-import { unauthorized } from "../../app/lib/server/errors";
 import type { HonoEnv } from "../env";
 
 export function container(c: Context<HonoEnv>): Container {

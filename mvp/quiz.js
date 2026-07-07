@@ -9,6 +9,26 @@
 	const $ = (id) => document.getElementById(id);
 	const S = () => Quiz.state; // atalho para o estado vivo
 
+	function quizUrl(page, extra) {
+		const params = new URLSearchParams();
+		params.set("quiz", Quiz.quizId || Quiz.DEFAULT_ID);
+		if (extra) {
+			Object.entries(extra).forEach(([key, value]) => {
+				params.set(key, value);
+			});
+		}
+		return `${page}?${params.toString()}`;
+	}
+
+	function showLoadError(message) {
+		const box = $("load-error");
+		box.classList.remove("hidden");
+		box.innerHTML =
+			"<strong>Não foi possível carregar este quiz.</strong>" +
+			`<p>${Quiz.escapeHtml(message)}</p>` +
+			'<p><a class="btn btn-primary btn-sm" href="index.html">Voltar ao início</a></p>';
+	}
+
 	// ---------- navegação de telas internas ----------
 	function showScreen(name) {
 		$("screen-quiz").classList.toggle("hidden", name !== "quiz");
@@ -95,13 +115,15 @@
 	}
 
 	// ---------- correção ----------
-	function correctRun() {
+	async function correctRun() {
 		if (!S().corrected) {
 			const unanswered = S().runIds.filter((id) => !Quiz.isAnswered(id)).length;
 			if (unanswered > 0) {
-				const ok = confirm(
-					`Você ainda não respondeu ${unanswered} questão(ões). Deseja corrigir mesmo assim?`,
-				);
+				const ok = await Quiz.ui.confirm({
+					title: "Corrigir agora?",
+					message: `Você ainda não respondeu ${unanswered} questão(ões). O resultado vai contar essas questões como erradas.`,
+					confirmLabel: "Corrigir",
+				});
 				if (!ok) return;
 			}
 			S().corrected = true;
@@ -187,25 +209,31 @@
 		renderQuiz();
 	}
 
-	function redoWrongOnly() {
+	async function redoWrongOnly() {
 		if (Quiz.countWrong() === 0) {
-			alert("Você não tem questões erradas para refazer.");
+			Quiz.ui.toast("Você não tem questões erradas para refazer.", "info");
 			return;
 		}
-		const ok = confirm(
-			"Refazer apenas erradas\n\n" +
-				"Isto vai LIMPAR suas respostas das questões erradas para você " +
-				"respondê-las de novo. As respostas certas serão mantidas.\n\n" +
-				"Deseja continuar?",
-		);
+		const ok = await Quiz.ui.confirm({
+			title: "Refazer apenas erradas",
+			message:
+				"Isto limpa suas respostas erradas para você responder de novo. As respostas certas serão mantidas.",
+			confirmLabel: "Refazer",
+		});
 		if (!ok) return;
 		Quiz.prepareRedoWrong();
 		renderQuiz();
 	}
 
-	function restartAll() {
-		if (!Quiz.confirmWipe()) return;
-		Quiz.resetAll();
+	async function restartAll() {
+		const ok = await Quiz.ui.confirm({
+			title: "Resetar progresso",
+			message: "Isto apaga respostas, revisões e resultado salvo apenas deste quiz.",
+			confirmLabel: "Resetar",
+			danger: true,
+		});
+		if (!ok) return;
+		Quiz.resetProgress(Quiz.quizId);
 		location.href = "index.html";
 	}
 
@@ -233,10 +261,15 @@
 		bind();
 		const r = await Quiz.load();
 		if (!r.ok) {
-			alert("Não foi possível carregar as questões. Volte ao início e use um servidor local.");
-			location.href = "index.html";
+			showLoadError(
+				"Volte ao início e selecione um quiz salvo ou rode o MVP por um servidor local.",
+			);
+			$("screen-quiz").classList.add("hidden");
+			$("screen-result").classList.add("hidden");
 			return;
 		}
+		$("tab-quiz").href = quizUrl("quiz.html");
+		$("tab-list").href = quizUrl("list.html");
 		S().mode = "quiz";
 		Quiz.save();
 

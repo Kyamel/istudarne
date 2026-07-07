@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -6,16 +6,17 @@ import {
 	ButtonLink,
 	ContentGrid,
 	Field,
+	FormCard,
 	Muted,
 	Page,
 	PageHeader,
 	Panel,
+	Row,
+	VisibilityTag,
 } from "../components";
 import type { GroupSummary } from "../lib/api";
 import { createGroup, fetchGroups, joinGroup } from "../lib/api";
-import { cx } from "../lib/classes";
 import { m } from "../lib/i18n";
-import styles from "./GroupsPage.module.css";
 
 export default function GroupsPage() {
 	const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function GroupsPage() {
 
 	useEffect(load, []);
 
-	async function handleCreate(event: FormEvent<HTMLFormElement>) {
+	async function handleCreate(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setBusy(true);
 		try {
@@ -77,7 +78,7 @@ export default function GroupsPage() {
 			/>
 
 			{showForm ? (
-				<form className={styles.form} onSubmit={handleCreate}>
+				<FormCard onSubmit={handleCreate}>
 					<Field
 						label={m.groups_name()}
 						minLength={2}
@@ -93,7 +94,7 @@ export default function GroupsPage() {
 					<Button variant="primary" disabled={busy} type="submit">
 						{busy ? m.groups_creating() : m.groups_create_public()}
 					</Button>
-				</form>
+				</FormCard>
 			) : null}
 
 			{status ? <Muted>{status}</Muted> : null}
@@ -101,17 +102,13 @@ export default function GroupsPage() {
 			<ContentGrid>
 				{groups.map((group) => (
 					<Panel key={group.id}>
-						<div className={styles.head}>
-							<h2>{group.name}</h2>
-							<span
-								className={cx(styles.visibility, group.visibility === "public" && styles.public)}
-							>
-								{group.visibility === "public" ? m.visibility_public() : m.visibility_private()}
-							</span>
-						</div>
+						<Row justify="between" gap="sm">
+							<h2 className="text-xl">{group.name}</h2>
+							<VisibilityTag visibility={group.visibility} />
+						</Row>
 						<p>{group.description || "—"}</p>
 						<Muted>{m.groups_members({ count: group.memberCount })}</Muted>
-						<footer className={styles.actions}>
+						<Row justify="end" gap="sm">
 							{group.isMember ? (
 								<ButtonLink to={`/groups/${group.id}`} variant="primary">
 									{m.groups_open()}
@@ -119,7 +116,7 @@ export default function GroupsPage() {
 							) : (
 								<Button onClick={() => handleJoin(group.id)}>{m.groups_join()}</Button>
 							)}
-						</footer>
+						</Row>
 					</Panel>
 				))}
 			</ContentGrid>

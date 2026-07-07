@@ -1,12 +1,12 @@
 # Quiz IHC — Autoavaliação de Questões Objetivas
 
 Site **estático** (HTML + CSS + JavaScript puro, sem backend e sem
-dependências) para estudar e se autoavaliar com 100 questões de múltipla
-escolha de **Interação Humano-Computador (IHC)**.
+dependências) para estudar e se autoavaliar com questões de múltipla escolha
+de **Interação Humano-Computador (IHC)**.
 
-As questões são carregadas dinamicamente de um arquivo
-[`questions.json`](questions.json), então você pode editar ou trocar o banco de
-questões sem mexer no código.
+O banco padrão vem de [`questions.json`](questions.json). Pela tela inicial,
+também é possível carregar outros arquivos JSON; eles ficam salvos no
+`localStorage` do navegador e aparecem na biblioteca local.
 
 ## ✨ Funcionalidades
 
@@ -16,20 +16,27 @@ questões sem mexer no código.
     uma alternativa você clica em **“Ver resposta”** para revelar a correta e a
     justificativa na hora. No topo há **filtros** (Todas, Respondidas,
     Acertadas, **Erradas**, Não respondidas) para revisar.
-- **Carregar um `questions.json`** pela própria tela inicial (botão de upload),
-  útil para testar outro banco sem editar arquivos. O app também lê
-  automaticamente o `questions.json` da raiz.
-- Tela inicial com título, descrição e botão **Começar**.
+- **Biblioteca local** com o banco padrão e os quizzes JSON importados pelo
+  usuário.
+- **Excluir um quiz salvo** ou **excluir todos os quizzes importados**.
+- **Resetar o progresso de um quiz específico**, sem afetar os demais.
+- **Carregar um `questions.json`** pela própria tela inicial, útil para testar
+  outro banco sem editar arquivos. O app também lê automaticamente o
+  `questions.json` da raiz.
+- Tela inicial com cards dos quizzes salvos e ações de continuar, lista,
+  resetar progresso e excluir.
 - Uma questão por vez, com indicador de progresso (“Questão 12 de 100”).
 - Seleção de alternativa clicando nela.
 - Botões **Anterior**, **Próxima**, **Corrigir** e **Reiniciar**.
-- Progresso salvo automaticamente no `localStorage` (continue de onde parou).
+- Progresso salvo automaticamente no `localStorage`, separado por quiz.
 - Ao corrigir: total de acertos, erros, porcentagem, lista de erradas com a
   alternativa marcada, a correta e a justificativa.
 - Destaque visual: **alternativa correta em verde**, **alternativa errada
   marcada em vermelho**.
 - Revisão das questões após a correção.
 - Opções **“mostrar apenas erradas”** e **“refazer apenas erradas”**.
+- Tratamento de erros inline para JSON inválido, falha de leitura e falha ao
+  carregar o banco padrão.
 - Layout limpo e responsivo (funciona bem em desktop e celular).
 - Navegação por teclado: setas ← e →.
 
@@ -50,8 +57,8 @@ mvp/
 ```
 
 > Cada página (`index`, `quiz`, `list`) carrega o `common.js` primeiro e
-> depois o seu próprio `.js`. O progresso é compartilhado entre as páginas
-> porque fica salvo no `localStorage`.
+> depois o seu próprio `.js`. Os quizzes importados e seus progressos ficam
+> salvos no `localStorage` do navegador.
 
 ## ▶️ Como rodar localmente
 
@@ -136,8 +143,7 @@ Regras dos campos:
 - `explanation`: justificativa mostrada após a correção.
 
 > Dica: ao alterar o conteúdo, se notar comportamento estranho por causa de um
-> progresso antigo salvo, clique em **Reiniciar** no app (limpa o
-> `localStorage`).
+> progresso antigo salvo, use **Resetar progresso** no card daquele quiz.
 
 ## 🛠️ Tecnologias
 

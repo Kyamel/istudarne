@@ -6,18 +6,27 @@ on:
     paths:
       - "app/**"
       - "worker/**"
+      - "shared/**"
+      - "messages/**"
+      - "project.inlang/**"
       - "migrations/**"
       - "index.html"
+      - "biome.json"
+      - "drizzle.config.ts"
       - "package.json"
       - "package-lock.json"
       - "tsconfig.json"
       - "vite.config.ts"
       - "wrangler.jsonc"
+      - "worker-configuration.d.ts"
       - ".github/workflows/deploy-cloudflare.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: cloudflare-deploy
+  group: cloudflare-deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

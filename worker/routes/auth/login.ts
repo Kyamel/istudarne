@@ -1,4 +1,4 @@
-import { loginRequestSchema } from "../../../app/lib/contracts";
+import { loginRequestSchema } from "@shared/contracts";
 import type { App } from "../../env";
 import { container } from "../../http/context";
 import { setSessionCookie } from "../../http/cookies";

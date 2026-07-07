@@ -10,29 +10,31 @@
   <div class="container">
 
     <section id="screen-start" class="screen">
-      <h1 id="start-title">Carregando…</h1>
-      <p id="start-description" class="muted"></p>
-      <p id="start-resume" class="resume-note hidden">
-        Encontramos um progresso salvo. Você pode continuar de onde parou.
-      </p>
-
-      <div class="actions actions-center">
-        <button id="btn-start" class="btn btn-primary btn-lg" type="button">Começar quiz</button>
-        <button id="btn-open-list" class="btn btn-lg" type="button">Ver todas em lista</button>
-        <button id="btn-resume" class="btn btn-lg hidden" type="button">Continuar</button>
+      <div class="page-heading">
+        <div>
+          <h1>Quiz IHC</h1>
+          <p class="muted">Escolha um banco salvo neste navegador ou carregue um novo arquivo JSON.</p>
+        </div>
+        <button id="btn-delete-all" class="btn btn-ghost btn-sm hidden" type="button">Excluir salvos</button>
       </div>
 
-      <div class="actions actions-center">
-        <button id="btn-clear" class="btn btn-ghost hidden" type="button">🗑️ Limpar progresso salvo</button>
+      <div id="load-error" class="error-panel hidden" role="alert"></div>
+
+      <div class="library-section">
+        <h2>Biblioteca local</h2>
+        <div id="quiz-library" class="library-grid"></div>
       </div>
 
-      <!-- Upload de um questions.json -->
       <div class="upload-box">
-        <p class="muted upload-label">Carregar outro banco de questões (.json):</p>
-        <input type="file" id="file-json" accept="application/json,.json" />
-        <p class="muted upload-hint" id="file-status"></p>
-        <p class="muted upload-hint" id="bank-status"></p>
-        <button id="btn-default-bank" class="btn btn-ghost btn-sm hidden" type="button">Voltar ao banco padrão</button>
+        <div class="upload-header">
+          <div>
+            <h2>Adicionar quiz por JSON</h2>
+            <p class="muted upload-label">Selecione um arquivo no mesmo formato do <code>questions.json</code>.</p>
+          </div>
+          <input type="file" id="file-json" accept="application/json,.json" />
+        </div>
+        <div id="file-status" class="upload-status muted"></div>
+        <div id="file-errors" class="error-panel hidden" role="alert"></div>
       </div>
     </section>
 

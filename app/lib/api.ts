@@ -1,4 +1,3 @@
-import type { z } from "zod";
 import {
 	authUserResponseSchema,
 	type ChatMessage,
@@ -37,7 +36,8 @@ import {
 	submitAnswerRequestSchema,
 	submitAnswerResponseSchema,
 	type UserStats,
-} from "./contracts";
+} from "@shared/contracts";
+import type { z } from "zod";
 
 export type {
 	ChatMessage,
@@ -62,8 +62,13 @@ export class ApiError extends Error {
 	}
 }
 
-async function request<T>(url: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
-	const response = await fetch(url, {
+/* Base URL of the Worker API. Empty in the web app (same origin); set
+   VITE_API_BASE for builds served from another origin, e.g. the Capacitor
+   Android app (capacitor://localhost) talking to the deployed Worker. */
+const API_BASE: string = import.meta.env.VITE_API_BASE ?? "";
+
+async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
+	const response = await fetch(`${API_BASE}${path}`, {
 		credentials: "include",
 		...init,
 	});
@@ -242,6 +247,8 @@ export function fetchGroupMessages(id: string) {
 }
 
 export function groupChatUrl(id: string) {
-	const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-	return `${protocol}//${window.location.host}/api/groups/${id}/chat`;
+	// Derive the WebSocket endpoint from the API base (or the current origin).
+	const base = API_BASE ? new URL(API_BASE) : new URL(window.location.href);
+	const protocol = base.protocol === "https:" ? "wss:" : "ws:";
+	return `${protocol}//${base.host}/api/groups/${id}/chat`;
 }

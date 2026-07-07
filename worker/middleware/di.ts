@@ -1,5 +1,5 @@
+import { createContainer } from "@server/container";
 import type { MiddlewareHandler } from "hono";
-import { createContainer } from "../../app/lib/server/container";
 import type { HonoEnv } from "../env";
 import { getSessionToken } from "../http/cookies";
 

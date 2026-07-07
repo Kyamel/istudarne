@@ -1,6 +1,6 @@
+import { SESSION_TTL_SECONDS } from "@server/services/authService";
 import type { Context } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
-import { SESSION_TTL_SECONDS } from "../../app/lib/server/services/authService";
 
 const SESSION_COOKIE = "istudarne_session";
 

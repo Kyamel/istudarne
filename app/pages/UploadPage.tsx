@@ -1,20 +1,24 @@
-import type { ChangeEvent, FormEvent } from "react";
+import { uploadedQuizSchema } from "@shared/contracts";
+import type { ChangeEvent, SubmitEvent } from "react";
 import { useState } from "react";
 import {
 	Button,
 	ButtonLink,
 	CenterActions,
+	ChoiceFieldset,
 	Eyebrow,
+	FileField,
+	FormCard,
 	Muted,
 	Page,
 	PageHeader,
+	Panel,
+	RadioChoice,
 	StatusMessage,
 	TagRow,
 } from "../components";
 import { uploadQuiz } from "../lib/api";
-import { uploadedQuizSchema } from "../lib/contracts";
 import { m } from "../lib/i18n";
-import styles from "./UploadPage.module.css";
 
 type Preview = {
 	title: string;
@@ -58,7 +62,7 @@ export default function UploadPage() {
 		}
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (!file || !preview) return;
 		setBusy(true);
@@ -84,48 +88,42 @@ export default function UploadPage() {
 				description={m.upload_subtitle()}
 			/>
 
-			<form className={styles.form} onSubmit={handleSubmit}>
-				<label className={styles.fileField}>
-					<span>{m.upload_file_label()}</span>
-					<input accept="application/json,.json" onChange={handleFile} type="file" />
-				</label>
+			<FormCard onSubmit={handleSubmit}>
+				<FileField
+					label={m.upload_file_label()}
+					accept="application/json,.json"
+					onChange={handleFile}
+				/>
 
 				{preview ? (
-					<div className={styles.preview} aria-live="polite">
+					<Panel accent="secondary" aria-live="polite">
 						<Eyebrow>{m.upload_preview()}</Eyebrow>
-						<h2>{preview.title}</h2>
+						<h2 className="text-xl">{preview.title}</h2>
 						{preview.description ? <p>{preview.description}</p> : null}
 						<Muted>{m.upload_questions_detected({ count: preview.questionCount })}</Muted>
 						{preview.tags.length ? <TagRow tags={preview.tags} /> : null}
-					</div>
+					</Panel>
 				) : null}
 
-				<fieldset className={styles.fieldset}>
-					<legend className={styles.legend}>{m.upload_visibility_legend()}</legend>
-					<label className={styles.choice}>
-						<input
-							checked={visibility === "private"}
-							name="visibility"
-							type="radio"
-							onChange={() => setVisibility("private")}
-						/>
-						{m.upload_visibility_private()}
-					</label>
-					<label className={styles.choice}>
-						<input
-							checked={visibility === "public"}
-							name="visibility"
-							type="radio"
-							onChange={() => setVisibility("public")}
-						/>
-						{m.upload_visibility_public()}
-					</label>
-				</fieldset>
+				<ChoiceFieldset legend={m.upload_visibility_legend()}>
+					<RadioChoice
+						checked={visibility === "private"}
+						label={m.upload_visibility_private()}
+						name="visibility"
+						onChange={() => setVisibility("private")}
+					/>
+					<RadioChoice
+						checked={visibility === "public"}
+						label={m.upload_visibility_public()}
+						name="visibility"
+						onChange={() => setVisibility("public")}
+					/>
+				</ChoiceFieldset>
 
 				<Button variant="primary" disabled={busy || !preview} type="submit">
 					{busy ? m.upload_busy() : m.upload_submit()}
 				</Button>
-			</form>
+			</FormCard>
 
 			{error ? (
 				<StatusMessage tone="danger" role="alert">
