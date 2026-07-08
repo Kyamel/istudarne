@@ -68,7 +68,12 @@ async function unwrap<
 		}
 		throw new ApiError(message, response.status);
 	}
-	return (await response.json()) as SuccessJson<R>;
+	try {
+		return (await response.json()) as SuccessJson<R>;
+	} catch {
+		// 2xx with a body that is not valid JSON (truncated response, proxy page).
+		throw new ApiError("Invalid API response.", response.status);
+	}
 }
 
 /* ---------------------------------- auth ---------------------------------- */
