@@ -30,12 +30,15 @@ export function tryRefresh(): Promise<boolean> {
 	return refreshPromise;
 }
 
+/* Endpoints where a 401 means "bad credentials", not "expired session" —
+   refreshing and retrying would just waste a round trip. */
+const NO_RETRY_PATHS = ["/api/auth/refresh", "/api/auth/login"];
+
 const fetchWithRefresh: typeof fetch = async (input, init) => {
 	let response = await fetch(input, init);
 
-	const url =
-		typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-	if (response.status === 401 && !url.includes("/api/auth/refresh")) {
+	const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+	if (response.status === 401 && !NO_RETRY_PATHS.some((path) => url.includes(path))) {
 		if (await tryRefresh()) {
 			response = await fetch(input, init);
 		}
