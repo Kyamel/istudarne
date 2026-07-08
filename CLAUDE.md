@@ -18,6 +18,7 @@ Everything (SPA + API) ships as a single Cloudflare Worker.
 - `npm run typecheck` — compiles i18n then `tsc --noEmit`. `npm run lint` / `npm run check` — Biome (tabs, double quotes, 100 cols).
 - `npm run db:generate` — Drizzle migration from schema diff (interactive; if it needs a TTY answer about renames, add/remove tables in two steps so each diff is pure additions or pure drops).
 - `npm run db:migrate:local` / `db:migrate:remote` — apply D1 migrations.
+- `npm run rpc:types` — emits flattened declarations of `worker/routes` into `.rpc/` (gitignored); the `@api/routes` alias resolves there so IDE autocomplete on the RPC client is fast (sub-second) instead of re-inferring the whole zod-openapi chain (~10 s per keystroke). Runs automatically before `dev` and `typecheck`; after editing routes, rerun it (or keep `npm run rpc:types:watch` running) so `ApiRoutes` stays fresh.
 - `worker-configuration.d.ts` is generated (the Cloudflare Vite plugin regenerates it on dev/build; `npx wrangler types` also works). Never hand-edit `Env`; the file is excluded from Biome.
 
 ## Architecture (worker/)

@@ -1,0 +1,10 @@
+{
+	"extends": "./tsconfig.json",
+	"include": ["worker/**/*", "shared/**/*", "worker-configuration.d.ts"],
+	"compilerOptions": {
+		"noEmit": false,
+		"emitDeclarationOnly": true,
+		"declaration": true,
+		"outDir": ".rpc"
+	}
+}

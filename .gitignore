@@ -16,3 +16,6 @@ worker-configuration.d.ts.map
 app/paraglide/
 .inlang/
 project.inlang/cache/
+
+# Precompiled RPC route types (npm run rpc:types)
+.rpc/

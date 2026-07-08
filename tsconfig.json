@@ -10,6 +10,10 @@
 		"paths": {
 			"~/*": ["./app/*"],
 			"@shared/*": ["./shared/*"],
+			/* Precompiled route types (npm run rpc:types → .rpc/). Resolving
+			   ApiRoutes from flattened .d.ts instead of re-inferring through the
+			   zod-openapi chain keeps IDE autocomplete on the RPC client fast. */
+			"@api/routes": ["./.rpc/worker/routes/index"],
 			"@api/*": ["./worker/*"]
 		},
 		"esModuleInterop": true,
@@ -21,5 +25,5 @@
 		"strict": true,
 		"noEmit": true
 	},
-	"exclude": ["dist", "node_modules"]
+	"exclude": ["dist", "node_modules", ".rpc"]
 }
