@@ -1,6 +1,6 @@
+import type { HonoEnv } from "@api/env";
 import { createContainer } from "@api/server/container";
 import type { MiddlewareHandler } from "hono";
-import type { HonoEnv } from "@api/env";
 
 /**
  * Opens the database connection and builds the DI container once per request.

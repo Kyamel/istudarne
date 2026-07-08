@@ -1,8 +1,8 @@
-import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
-import { quizListResponseSchema } from "@shared/contracts";
 import type { HonoEnv } from "@api/env";
 import { container } from "@api/http/context";
 import { jsonResponse } from "@api/openapi";
+import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
+import { quizListResponseSchema } from "@shared/contracts";
 
 const SearchQuerySchema = z.object({
 	q: z

@@ -1,8 +1,8 @@
-import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
-import { type QuizDetail, quizDetailResponseSchema } from "@shared/contracts";
 import type { HonoEnv } from "@api/env";
 import { container, currentUser } from "@api/http/context";
 import { errorResponse, IdParamsSchema } from "@api/openapi";
+import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
+import { type QuizDetail, quizDetailResponseSchema } from "@shared/contracts";
 
 /* Renders a quiz as self-contained Markdown, one section per question.
    This shape chunks cleanly for embeddings in RAG pipelines. */

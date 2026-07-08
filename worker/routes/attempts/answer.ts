@@ -1,8 +1,8 @@
-import { createRoute, type RouteHandler } from "@hono/zod-openapi";
-import { submitAnswerRequestSchema, submitAnswerResponseSchema } from "@shared/contracts";
 import type { HonoEnv } from "@api/env";
 import { container, requireUser } from "@api/http/context";
 import { authSecurity, errorResponse, IdParamsSchema, jsonBody, jsonResponse } from "@api/openapi";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { submitAnswerRequestSchema, submitAnswerResponseSchema } from "@shared/contracts";
 
 export const answerAttemptRoute = createRoute({
 	method: "post",

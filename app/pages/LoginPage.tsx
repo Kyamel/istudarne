@@ -11,8 +11,7 @@ import {
 	StatusMessage,
 	Tabs,
 } from "../components";
-import { ApiError, resendVerification } from "../lib/api";
-import { useAuth } from "../lib/auth-context";
+import { AuthError, useAuth } from "../lib/auth-context";
 import { m } from "../lib/i18n";
 
 type Mode = "login" | "register";
@@ -21,7 +20,7 @@ type Mode = "login" | "register";
 const RESEND_COOLDOWN_MS = 60_000;
 
 export default function LoginPage() {
-	const { login, register } = useAuth();
+	const { login, register, resendVerification } = useAuth();
 	const [mode, setMode] = useState<Mode>("login");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -64,9 +63,9 @@ export default function LoginPage() {
 				setResendReadyAt(Date.now() + RESEND_COOLDOWN_MS);
 			}
 		} catch (err) {
-			if (err instanceof ApiError && err.status === 403) setCanResend(true);
+			if (err instanceof AuthError && err.status === 403) setCanResend(true);
 			setError(
-				err instanceof ApiError || err instanceof Error ? err.message : m.auth_generic_error(),
+				err instanceof AuthError || err instanceof Error ? err.message : m.auth_generic_error(),
 			);
 		} finally {
 			setBusy(false);
@@ -83,7 +82,7 @@ export default function LoginPage() {
 			setNow(Date.now());
 		} catch (err) {
 			setError(
-				err instanceof ApiError || err instanceof Error ? err.message : m.auth_generic_error(),
+				err instanceof AuthError || err instanceof Error ? err.message : m.auth_generic_error(),
 			);
 		} finally {
 			setBusy(false);

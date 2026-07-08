@@ -1,8 +1,18 @@
-import { generateToken, hashPassword, sha256Hex, verifyPassword } from "../auth/crypto";
-import { ACCESS_TOKEN_TTL_SECONDS, signAccessToken, verifyAccessToken } from "../auth/jwt";
-import type { AuthUser } from "../domain/types";
-import { badRequest, conflict, forbidden, unauthorized } from "../errors";
-import type { UserRepository } from "../repositories/userRepository";
+/**
+ * Auth module — business logic. Framework-touch is limited to HTTPException
+ * (so any Hono app maps errors without custom classes); persistence goes
+ * through the AuthStore interface.
+ *
+ * Model: 15-min HS256 JWT access tokens (stateless) + opaque refresh tokens
+ * (SHA-256-hashed at rest, rotated on every refresh, reuse revokes all of the
+ * user's sessions) + single-use email-verification tokens with a resend
+ * cooldown. Email verification is required before the first login.
+ */
+import { HTTPException } from "hono/http-exception";
+import type { AuthTokens, AuthUser, RegisterRequest } from "./contracts";
+import { generateToken, hashPassword, sha256Hex, verifyPassword } from "./crypto";
+import { ACCESS_TOKEN_TTL_SECONDS, signAccessToken, verifyAccessToken } from "./jwt";
+import type { AuthStore, CredentialsRecord } from "./store";
 
 const REFRESH_TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const EMAIL_VERIFICATION_TTL_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
@@ -13,23 +23,7 @@ const RESEND_COOLDOWN_MS = 1000 * 60;
 export const REFRESH_TOKEN_TTL_SECONDS = Math.floor(REFRESH_TOKEN_TTL_MS / 1000);
 export { ACCESS_TOKEN_TTL_SECONDS };
 
-export type RegisterInput = {
-	email: string;
-	username: string;
-	displayName: string;
-	password: string;
-};
-
-export type AuthTokens = {
-	accessToken: string;
-	refreshToken: string;
-	expiresIn: number;
-	tokenType: "Bearer";
-};
-
-type UserRow = NonNullable<Awaited<ReturnType<UserRepository["getByEmail"]>>>;
-
-function toAuthUser(row: UserRow): AuthUser {
+function toAuthUser(row: CredentialsRecord): AuthUser {
 	return {
 		id: row.id,
 		email: row.email,
@@ -41,7 +35,7 @@ function toAuthUser(row: UserRow): AuthUser {
 	};
 }
 
-export function createAuthService(users: UserRepository, jwtSecret: string) {
+export function createAuthService(users: AuthStore, jwtSecret: string) {
 	async function issueTokens(userId: string): Promise<AuthTokens> {
 		const refreshToken = generateToken();
 		await users.createRefreshToken({
@@ -74,15 +68,15 @@ export function createAuthService(users: UserRepository, jwtSecret: string) {
 		 * Creates the account but does NOT sign the user in: email verification
 		 * is required before the first login, so no tokens are issued here.
 		 */
-		async register(input: RegisterInput): Promise<{
+		async register(input: RegisterRequest): Promise<{
 			user: AuthUser;
 			verificationToken: string;
 		}> {
 			if (await users.getByEmail(input.email)) {
-				throw conflict("This email is already in use.");
+				throw new HTTPException(409, { message: "This email is already in use." });
 			}
 			if (await users.getByUsername(input.username)) {
-				throw conflict("This username is already taken.");
+				throw new HTTPException(409, { message: "This username is already taken." });
 			}
 
 			const passwordHash = await hashPassword(input.password);
@@ -110,12 +104,13 @@ export function createAuthService(users: UserRepository, jwtSecret: string) {
 		async login(email: string, password: string): Promise<{ user: AuthUser; tokens: AuthTokens }> {
 			const user = await users.getByEmail(email);
 			if (!user || !(await verifyPassword(password, user.passwordHash))) {
-				throw unauthorized("Incorrect email or password.");
+				throw new HTTPException(401, { message: "Incorrect email or password." });
 			}
 			if (user.emailVerifiedAt === null) {
-				throw forbidden(
-					"Please verify your email before signing in. Check your inbox for the verification link.",
-				);
+				throw new HTTPException(403, {
+					message:
+						"Please verify your email before signing in. Check your inbox for the verification link.",
+				});
 			}
 			return { user: toAuthUser(user), tokens: await issueTokens(user.id) };
 		},
@@ -127,18 +122,19 @@ export function createAuthService(users: UserRepository, jwtSecret: string) {
 		 */
 		async refresh(refreshToken: string): Promise<{ user: AuthUser; tokens: AuthTokens }> {
 			const row = await users.getRefreshTokenByHash(await sha256Hex(refreshToken));
-			if (!row) throw unauthorized("Invalid session. Please sign in again.");
+			if (!row) throw new HTTPException(401, { message: "Invalid session. Please sign in again." });
 
 			if (row.revokedAt) {
 				await users.revokeAllRefreshTokens(row.userId);
-				throw unauthorized("Session revoked. Please sign in again.");
+				throw new HTTPException(401, { message: "Session revoked. Please sign in again." });
 			}
 			if (row.expiresAt.getTime() <= Date.now()) {
-				throw unauthorized("Session expired. Please sign in again.");
+				throw new HTTPException(401, { message: "Session expired. Please sign in again." });
 			}
 
 			const user = await users.getById(row.userId);
-			if (!user) throw unauthorized("Invalid session. Please sign in again.");
+			if (!user)
+				throw new HTTPException(401, { message: "Invalid session. Please sign in again." });
 
 			const tokens = await issueTokens(row.userId);
 			await users.revokeRefreshToken(row.id, await sha256Hex(tokens.refreshToken));
@@ -153,13 +149,13 @@ export function createAuthService(users: UserRepository, jwtSecret: string) {
 
 		async endSession(refreshToken: string) {
 			const row = await users.getRefreshTokenByHash(await sha256Hex(refreshToken));
-			if (row && !row.revokedAt) await users.revokeRefreshToken(row.id);
+			if (row && !row.revokedAt) await users.revokeRefreshToken(row.id, null);
 		},
 
 		async verifyEmail(token: string): Promise<void> {
 			const row = await users.getEmailVerificationTokenByHash(await sha256Hex(token));
 			if (!row || row.usedAt || row.expiresAt.getTime() <= Date.now()) {
-				throw badRequest("Invalid or expired verification link.");
+				throw new HTTPException(400, { message: "Invalid or expired verification link." });
 			}
 			await users.markEmailVerificationTokenUsed(row.id);
 			await users.markEmailVerified(row.userId);

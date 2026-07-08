@@ -29,7 +29,7 @@ export function renderLandingPage(locale: Locale, origin: string) {
 		description,
 		applicationCategory: "EducationalApplication",
 		operatingSystem: "Web",
-    browserRequirements: "Requires JavaScript",
+		browserRequirements: "Requires JavaScript",
 		offers: { "@type": "Offer", price: "0" },
 	});
 

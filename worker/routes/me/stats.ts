@@ -1,8 +1,8 @@
-import { createRoute, type RouteHandler } from "@hono/zod-openapi";
-import { statsResponseSchema } from "@shared/contracts";
 import type { HonoEnv } from "@api/env";
 import { container, requireUser } from "@api/http/context";
 import { authSecurity, errorResponse, jsonResponse } from "@api/openapi";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { statsResponseSchema } from "@shared/contracts";
 
 export const myStatsRoute = createRoute({
 	method: "get",

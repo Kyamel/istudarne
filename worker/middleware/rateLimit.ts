@@ -1,6 +1,6 @@
+import type { HonoEnv } from "@api/env";
 import { AppError } from "@api/server/errors";
 import type { MiddlewareHandler } from "hono";
-import type { HonoEnv } from "@api/env";
 
 /**
  * Rate limiting backed by a Cloudflare Workers ratelimit binding, keyed by

@@ -1,7 +1,8 @@
 /**
- * Transactional email via the Resend REST API (https://resend.com).
- * When RESEND_API_KEY is not configured (local dev), emails are logged
- * instead of sent so the flow stays testable end to end.
+ * Auth module — transactional email via the Resend REST API
+ * (https://resend.com). When `apiKey` is not configured (local dev), the
+ * verification link is logged instead of sent so the flow stays testable end
+ * to end.
  */
 
 type EmailConfig = {
@@ -41,8 +42,8 @@ export function createEmailService(config: EmailConfig) {
 			}
 			return send(
 				to,
-				"Confirm your Istudarne email",
-				`<p>Welcome to Istudarne!</p>
+				"Confirm your email",
+				`<p>Welcome!</p>
 				 <p>Confirm your email address by clicking the link below:</p>
 				 <p><a href="${verificationUrl}">Verify my email</a></p>
 				 <p>The link expires in 48 hours. If you did not create this account, ignore this message.</p>`,

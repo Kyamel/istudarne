@@ -1,8 +1,8 @@
+import type { HonoEnv } from "@api/env";
 import type { Container } from "@api/server/container";
 import type { AuthUser } from "@api/server/domain/types";
 import { unauthorized } from "@api/server/errors";
 import type { Context } from "hono";
-import type { HonoEnv } from "@api/env";
 
 export function container(c: Context<HonoEnv>): Container {
 	return c.get("container");

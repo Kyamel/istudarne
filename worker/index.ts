@@ -1,3 +1,4 @@
+import { ACCESS_COOKIE_NAME } from "@api/auth/cookies";
 import { StudyGroupChat } from "@api/server/study-group-chat";
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
@@ -12,7 +13,6 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import type { HonoEnv } from "./env";
 import { detectLocale, renderLandingPage, renderNotFoundPage, renderSharePage } from "./html";
-import { ACCESS_COOKIE_NAME } from "./http/cookies";
 import { handleError } from "./http/errorHandler";
 import { authMiddleware } from "./middleware/auth";
 import { diMiddleware } from "./middleware/di";

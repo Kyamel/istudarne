@@ -3,15 +3,8 @@ export type GroupVisibility = "public" | "private" | "invite";
 export type GroupRole = "owner" | "moderator" | "member";
 export type AttemptMode = "practice" | "exam" | "review";
 
-export type AuthUser = {
-	id: string;
-	email: string;
-	username: string;
-	displayName: string;
-	bio: string | null;
-	avatarUrl: string | null;
-	emailVerified: boolean;
-};
+/* The authenticated-user shape is owned by the self-contained auth module. */
+export type { AuthUser } from "../../auth/contracts";
 
 export type QuizSummary = {
 	id: string;

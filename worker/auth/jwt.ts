@@ -1,3 +1,4 @@
+/** Auth module — stateless access tokens (HS256 JWT via hono/jwt). */
 import { sign, verify } from "hono/jwt";
 
 /** Short-lived so a leaked access token has a small blast radius. */

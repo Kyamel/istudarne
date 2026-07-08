@@ -1,13 +1,15 @@
-import type { AuthTokens } from "@api/server/services/authService";
-import { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS } from "@api/server/services/authService";
+/** Auth module — httpOnly cookie transport for web clients. */
 import type { Context } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
+import type { AuthTokens } from "./contracts";
+import { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS } from "./service";
 
 const ACCESS_COOKIE = "istudarne_access";
 const REFRESH_COOKIE = "istudarne_refresh";
 
 /* The refresh cookie is only ever needed by the auth endpoints, so its path is
-   restricted to keep it off every other request. */
+   restricted to keep it off every other request. Adjust if you mount the auth
+   routes somewhere other than /api/auth. */
 const REFRESH_COOKIE_PATH = "/api/auth";
 
 export const ACCESS_COOKIE_NAME = ACCESS_COOKIE;

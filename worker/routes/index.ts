@@ -1,22 +1,10 @@
-import type { App } from "../env";
+import { createAuthApi } from "@api/auth/routes";
+import type { App, HonoEnv } from "../env";
 import { createAiJobHandler, createAiJobRoute } from "./ai/createJob";
 import { getAiJobHandler, getAiJobRoute } from "./ai/getJob";
 import { answerAttemptHandler, answerAttemptRoute } from "./attempts/answer";
 import { createAttemptHandler, createAttemptRoute } from "./attempts/create";
 import { finishAttemptHandler, finishAttemptRoute } from "./attempts/finish";
-import { loginHandler, loginRoute } from "./auth/login";
-import { logoutHandler, logoutRoute } from "./auth/logout";
-import { meHandler, meRoute } from "./auth/me";
-import { refreshHandler, refreshRoute } from "./auth/refresh";
-import { registerHandler, registerRoute } from "./auth/register";
-import {
-	resendVerificationHandler,
-	resendVerificationRoute,
-	verifyEmailHandler,
-	verifyEmailLinkHandler,
-	verifyEmailLinkRoute,
-	verifyEmailRoute,
-} from "./auth/verifyEmail";
 import { groupChatHandler, groupChatRoute } from "./groups/chat";
 import { createGroupHandler, createGroupRoute } from "./groups/create";
 import { groupDetailHandler, groupDetailRoute } from "./groups/detail";
@@ -48,6 +36,13 @@ import {
 import { followHandler, followRoute, unfollowHandler, unfollowRoute } from "./users/follow";
 import { profileHandler, profileRoute } from "./users/profile";
 
+/* Auth endpoints come from the self-contained module in worker/auth/; the
+   only wiring is telling it how to reach the per-request services. */
+const authApi = createAuthApi<HonoEnv>({
+	auth: (c) => c.get("container").services.auth,
+	email: (c) => c.get("container").services.email,
+});
+
 /**
  * Registers every API route. Each route file exports a `createRoute` definition
  * (which feeds the OpenAPI document / Swagger UI) plus its handler.
@@ -61,14 +56,14 @@ export function registerApiRoutes(app: App) {
 		app
 			.openapi(healthRoute, healthHandler)
 
-			.openapi(registerRoute, registerHandler)
-			.openapi(loginRoute, loginHandler)
-			.openapi(refreshRoute, refreshHandler)
-			.openapi(logoutRoute, logoutHandler)
-			.openapi(meRoute, meHandler)
-			.openapi(verifyEmailLinkRoute, verifyEmailLinkHandler)
-			.openapi(verifyEmailRoute, verifyEmailHandler)
-			.openapi(resendVerificationRoute, resendVerificationHandler)
+			.openapi(authApi.registerRoute, authApi.registerHandler)
+			.openapi(authApi.loginRoute, authApi.loginHandler)
+			.openapi(authApi.refreshRoute, authApi.refreshHandler)
+			.openapi(authApi.logoutRoute, authApi.logoutHandler)
+			.openapi(authApi.meRoute, authApi.meHandler)
+			.openapi(authApi.verifyEmailLinkRoute, authApi.verifyEmailLinkHandler)
+			.openapi(authApi.verifyEmailRoute, authApi.verifyEmailHandler)
+			.openapi(authApi.resendVerificationRoute, authApi.resendVerificationHandler)
 
 			// Specific routes must be registered before parametric routes to avoid route collisions.
 			.openapi(searchQuizzesRoute, searchQuizzesHandler)

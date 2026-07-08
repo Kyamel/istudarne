@@ -1,8 +1,8 @@
-import { createRoute, type RouteHandler } from "@hono/zod-openapi";
-import { okResponseSchema } from "@shared/contracts";
 import type { HonoEnv } from "@api/env";
 import { container, requireUser } from "@api/http/context";
 import { authSecurity, errorResponse, jsonResponse, UsernameParamsSchema } from "@api/openapi";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { okResponseSchema } from "@shared/contracts";
 
 const followResponses = {
 	200: jsonResponse(okResponseSchema, "Done."),

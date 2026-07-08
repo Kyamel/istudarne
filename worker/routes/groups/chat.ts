@@ -1,8 +1,8 @@
-import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
-import { forbidden, unauthorized } from "@api/server/errors";
 import type { HonoEnv } from "@api/env";
 import { container, currentUser } from "@api/http/context";
 import { authSecurity, GroupIdParamsSchema } from "@api/openapi";
+import { forbidden, unauthorized } from "@api/server/errors";
+import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
 
 export const groupChatRoute = createRoute({
 	method: "get",

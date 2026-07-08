@@ -1,8 +1,8 @@
-import { createRoute, type RouteHandler } from "@hono/zod-openapi";
-import { createGroupRequestSchema, createGroupResponseSchema } from "@shared/contracts";
 import type { HonoEnv } from "@api/env";
 import { container, requireUser } from "@api/http/context";
 import { authSecurity, errorResponse, jsonBody, jsonResponse } from "@api/openapi";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { createGroupRequestSchema, createGroupResponseSchema } from "@shared/contracts";
 
 export const createGroupRoute = createRoute({
 	method: "post",

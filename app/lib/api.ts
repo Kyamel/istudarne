@@ -5,21 +5,20 @@
  * production. No runtime schema parsing is needed: server and client share
  * the same contract source.
  */
+/* Type-only import from the auth module (erased at build, like ApiRoutes). */
+import type { CurrentUser } from "@api/auth/contracts";
 import type {
 	ChatMessage,
 	CreateAiJobRequest,
 	CreateGroupRequest,
-	CurrentUser,
 	GroupDetail,
 	GroupSummary,
 	HistoryEntry,
-	LoginRequest,
 	PatchQuizRequest,
 	Profile,
 	QuizDetail,
 	QuizQuestion,
 	QuizSummary,
-	RegisterRequest,
 	SubmitAnswerRequest,
 	UserStats,
 } from "@shared/contracts";
@@ -76,33 +75,8 @@ async function unwrap<
 	}
 }
 
-/* ---------------------------------- auth ---------------------------------- */
-
-export async function register(input: RegisterRequest) {
-	return unwrap(await rpc.api.auth.register.$post({ json: input }));
-}
-
-export async function login(input: LoginRequest) {
-	return unwrap(await rpc.api.auth.login.$post({ json: input }));
-}
-
-export async function logout() {
-	return unwrap(await rpc.api.auth.logout.$post({ json: {} }));
-}
-
-/* A 401 here (expired access cookie) is refreshed and retried transparently
-   by the client's fetch wrapper — see rpc.ts. */
-export async function fetchMe() {
-	return unwrap(await rpc.api.auth.me.$get());
-}
-
-export async function verifyEmail(token: string) {
-	return unwrap(await rpc.api.auth["verify-email"].$post({ json: { token } }));
-}
-
-export async function resendVerification(email: string) {
-	return unwrap(await rpc.api.auth["resend-verification"].$post({ json: { email } }));
-}
+/* Auth endpoints live in the self-contained client module (app/auth/client.ts),
+   consumed through the AuthProvider in app/auth/context.tsx. */
 
 /* --------------------------------- quizzes -------------------------------- */
 
@@ -128,9 +102,7 @@ export async function deleteQuiz(id: string) {
 }
 
 export async function setQuizPublished(id: string, published: boolean) {
-	const endpoint = published
-		? rpc.api.quizzes[":id"].publish
-		: rpc.api.quizzes[":id"].unpublish;
+	const endpoint = published ? rpc.api.quizzes[":id"].publish : rpc.api.quizzes[":id"].unpublish;
 	return unwrap(await endpoint.$post({ param: { id } }));
 }
 
@@ -140,12 +112,19 @@ export async function uploadQuiz(file: File, visibility: "private" | "public") {
 
 /* -------------------------------- attempts -------------------------------- */
 
-export async function startAttempt(quizId: string, mode: "practice" | "exam" | "review" = "practice") {
-	return unwrap(await rpc.api.quizzes[":id"].attempts.$post({ param: { id: quizId }, json: { mode } }));
+export async function startAttempt(
+	quizId: string,
+	mode: "practice" | "exam" | "review" = "practice",
+) {
+	return unwrap(
+		await rpc.api.quizzes[":id"].attempts.$post({ param: { id: quizId }, json: { mode } }),
+	);
 }
 
 export async function submitAnswer(attemptId: string, input: SubmitAnswerRequest) {
-	return unwrap(await rpc.api.attempts[":id"].answers.$post({ param: { id: attemptId }, json: input }));
+	return unwrap(
+		await rpc.api.attempts[":id"].answers.$post({ param: { id: attemptId }, json: input }),
+	);
 }
 
 export async function finishAttempt(attemptId: string) {
@@ -199,7 +178,9 @@ export async function leaveGroup(id: string) {
 }
 
 export async function shareQuiz(groupId: string, quizId: string) {
-	return unwrap(await rpc.api.groups[":id"].quizzes.$post({ param: { id: groupId }, json: { quizId } }));
+	return unwrap(
+		await rpc.api.groups[":id"].quizzes.$post({ param: { id: groupId }, json: { quizId } }),
+	);
 }
 
 export async function fetchGroupMessages(id: string) {

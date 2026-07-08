@@ -1,3 +1,5 @@
+/** Auth module — Web Crypto primitives (no dependencies, Workers-compatible). */
+
 const encoder = new TextEncoder();
 const PBKDF2_ITERATIONS = 100_000;
 

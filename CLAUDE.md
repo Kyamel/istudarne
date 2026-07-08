@@ -29,7 +29,7 @@ Request path: `index.ts` (middleware stack) → route handler → service → re
 - `worker/routes/**` — **one file per endpoint**, exporting a `createRoute` definition + a `RouteHandler`-typed handler. `routes/index.ts` chains every `.openapi(route, handler)` call and exports `type ApiRoutes`; that type powers the RPC client in `app/lib/rpc.ts` (`hc<ApiRoutes>`). New endpoints MUST be added to the chain (keeps Swagger and RPC complete) and specific paths must be registered before parametric ones.
 - `worker/server/` — framework-free domain code: `services/` (business logic), `repositories/` (one object per aggregate), `queries/` (one file per query), `container.ts` (per-request DI, built once in `middleware/di.ts`).
 - Errors: throw `AppError` (`worker/server/errors.ts`); `http/errorHandler.ts` maps `AppError` and Hono `HTTPException` to `{ error }` JSON. Zod validation failures use the same shape via the `defaultHook` in `index.ts`.
-- `shared/contracts/` — Zod schemas + types used by route definitions, the frontend `api.ts` wrapper, and the RPC client.
+- `shared/contracts/` — Zod schemas + types used by route definitions and (type-only) by the app. `shared/` exists for exactly three RUNTIME consumers on the app side: `shared/paraglide/` (i18n, executed by both app and worker html.ts), `chatEventSchema` (WebSocket events are outside the RPC type system — GroupPage parses them at runtime), and `uploadedQuizSchema` (client-side pre-validation in UploadPage). Everything else the app takes from contracts is `import type` (erased). If those three ever go away, `shared/contracts` can move to `worker/contracts` with type-only app imports (same pattern as `@api/routes` / `@api/auth/contracts`) — until then, keep `shared/` so the app never executes code that lives under `worker/`.
 
 ## Web vs native builds (one Worker, two deploys)
 
@@ -42,7 +42,9 @@ Do NOT split the project to "decouple" app from worker — the type coupling is 
 
 ## Auth model
 
-- **Access token**: 15-min JWT (HS256, `JWT_SECRET` secret) — `worker/server/auth/jwt.ts`.
+Auth is a **self-contained, copy-paste-able module pair**: `worker/auth/` (Hono: service, routes, middleware, cookies, crypto, Resend email — persistence behind the `AuthStore` interface, implemented by `userRepository`) and `app/auth/` (React: fetch client + `AuthProvider` + `fetchWithRefresh`). Each folder has a README with integration steps; host wiring lives in `middleware/auth.ts`, `routes/index.ts` (`createAuthApi`), and `container.ts`. Module errors are Hono `HTTPException`.
+
+- **Access token**: 15-min JWT (HS256, `JWT_SECRET` secret) — `worker/auth/jwt.ts`.
 - **Refresh token**: opaque, SHA-256-hashed in `refresh_tokens` (30 days), **rotated on every refresh**; reusing a rotated token revokes all of the user's sessions (`authService.refresh`).
 - **Two transports**: web app uses httpOnly cookies (`istudarne_access` on `/`, `istudarne_refresh` scoped to `/api/auth`); native apps use `Authorization: Bearer` and receive tokens in the login/refresh JSON body. `middleware/auth.ts` resolves both. `/api/auth/refresh` echoes `tokens` in the body **only** when the refresh token came in the body — cookie clients get cookies only, so page scripts (XSS) can never read the refresh token.
 - **Email verification is required before login** (403 otherwise). Register issues no tokens; Resend sends the link (`services/emailService.ts`). Without `RESEND_API_KEY` (dev), the magic link is logged to the console as `event: "email.verification_link"`. `POST /api/auth/resend-verification` is unauthenticated by email and always answers ok (no account enumeration).

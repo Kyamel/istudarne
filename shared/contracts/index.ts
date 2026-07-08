@@ -1,6 +1,5 @@
 export * from "./ai";
 export * from "./attempts";
-export * from "./auth";
 export * from "./base";
 export * from "./groups";
 export * from "./profiles";
