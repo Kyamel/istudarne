@@ -1,43 +1,29 @@
-import {
-	authUserResponseSchema,
-	type ChatMessage,
-	type CreateGroupRequest,
-	type CurrentUser,
-	createGroupRequestSchema,
-	createGroupResponseSchema,
-	finishAttemptResponseSchema,
-	type GroupDetail,
-	type GroupSummary,
-	groupDetailResponseSchema,
-	groupListResponseSchema,
-	groupMessagesResponseSchema,
-	type HistoryEntry,
-	historyResponseSchema,
-	type LoginRequest,
-	loginRequestSchema,
-	okResponseSchema,
-	type PatchQuizRequest,
-	type Profile,
-	patchQuizRequestSchema,
-	profileResponseSchema,
-	type QuizDetail,
-	type QuizQuestion,
-	type QuizSummary,
-	quizDetailResponseSchema,
-	quizListResponseSchema,
-	quizSummaryResponseSchema,
-	type RegisterRequest,
-	registerRequestSchema,
-	type SubmitAnswerRequest,
-	shareQuizRequestSchema,
-	startAttemptRequestSchema,
-	startAttemptResponseSchema,
-	statsResponseSchema,
-	submitAnswerRequestSchema,
-	submitAnswerResponseSchema,
-	type UserStats,
+/**
+ * Thin, typed wrapper around the RPC client (`rpc.ts`). Every request body,
+ * path param, and response type below is inferred from the Worker's route
+ * chain (`ApiRoutes`) — changing an endpoint breaks the compile here, not in
+ * production. No runtime schema parsing is needed: server and client share
+ * the same contract source.
+ */
+import type {
+	ChatMessage,
+	CreateAiJobRequest,
+	CreateGroupRequest,
+	CurrentUser,
+	GroupDetail,
+	GroupSummary,
+	HistoryEntry,
+	LoginRequest,
+	PatchQuizRequest,
+	Profile,
+	QuizDetail,
+	QuizQuestion,
+	QuizSummary,
+	RegisterRequest,
+	SubmitAnswerRequest,
+	UserStats,
 } from "@shared/contracts";
-import type { z } from "zod";
+import { API_BASE, rpc } from "./rpc";
 
 export type {
 	ChatMessage,
@@ -62,225 +48,157 @@ export class ApiError extends Error {
 	}
 }
 
-/* Base URL of the Worker API. Empty in the web app (same origin); set
-   VITE_API_BASE for builds served from another origin, e.g. the Capacitor
-   Android app (capacitor://localhost) talking to the deployed Worker. */
-const API_BASE: string = import.meta.env.VITE_API_BASE ?? "";
+/** JSON body of the success (2xx) variants of an RPC response union. */
+type SuccessJson<R> = R extends { ok: true; json(): Promise<infer T> } ? T : never;
 
-/* Access tokens are short-lived JWTs (~15 min). When a call comes back 401,
-   we rotate the session once via the refresh cookie and retry; concurrent 401s
-   share the same in-flight refresh. */
-let refreshPromise: Promise<boolean> | null = null;
-
-function tryRefresh(): Promise<boolean> {
-	refreshPromise ??= fetch(`${API_BASE}/api/auth/refresh`, {
-		method: "POST",
-		credentials: "include",
-		headers: { "Content-Type": "application/json" },
-		body: "{}",
-	})
-		.then((response) => response.ok)
-		.catch(() => false)
-		.finally(() => {
-			refreshPromise = null;
-		});
-	return refreshPromise;
-}
-
-async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
-	let response = await fetch(`${API_BASE}${path}`, {
-		credentials: "include",
-		...init,
-	});
-
-	if (response.status === 401 && !path.startsWith("/api/auth/")) {
-		if (await tryRefresh()) {
-			response = await fetch(`${API_BASE}${path}`, {
-				credentials: "include",
-				...init,
-			});
-		}
-	}
-
+/* All error responses share the `{ error }` shape (AppError / defaultHook /
+   HTTPException mapping in the Worker), so one helper covers every call. */
+async function unwrap<
+	R extends { ok: boolean; status: number; json(): Promise<unknown>; text(): Promise<string> },
+>(response: R): Promise<SuccessJson<R>> {
 	if (!response.ok) {
 		let message = `Request failed: ${response.status}`;
 		const text = await response.text();
 		if (text) {
 			try {
-				const data = JSON.parse(text) as { error?: string };
-				message = data.error ?? text;
+				message = (JSON.parse(text) as { error?: string }).error ?? text;
 			} catch {
 				message = text;
 			}
 		}
 		throw new ApiError(message, response.status);
 	}
-
-	const data = await response.json();
-	const parsed = schema.safeParse(data);
-	if (!parsed.success) {
-		throw new ApiError("Invalid API response.", response.status);
-	}
-	return parsed.data;
-}
-
-function jsonInit(method: string, body: unknown): RequestInit {
-	return {
-		method,
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
-	};
+	return (await response.json()) as SuccessJson<R>;
 }
 
 /* ---------------------------------- auth ---------------------------------- */
 
-export function register(input: RegisterRequest) {
-	const body = registerRequestSchema.parse(input);
-	return request("/api/auth/register", authUserResponseSchema, jsonInit("POST", body));
+export async function register(input: RegisterRequest) {
+	return unwrap(await rpc.api.auth.register.$post({ json: input }));
 }
 
-export function login(input: LoginRequest) {
-	const body = loginRequestSchema.parse(input);
-	return request("/api/auth/login", authUserResponseSchema, jsonInit("POST", body));
+export async function login(input: LoginRequest) {
+	return unwrap(await rpc.api.auth.login.$post({ json: input }));
 }
 
-export function logout() {
-	return request("/api/auth/logout", okResponseSchema, jsonInit("POST", {}));
+export async function logout() {
+	return unwrap(await rpc.api.auth.logout.$post({ json: {} }));
 }
 
-/** Boot-time session probe: refreshes once if the access token has expired. */
+/* A 401 here (expired access cookie) is refreshed and retried transparently
+   by the client's fetch wrapper — see rpc.ts. */
 export async function fetchMe() {
-	try {
-		return await request("/api/auth/me", authUserResponseSchema);
-	} catch (error) {
-		if (error instanceof ApiError && error.status === 401 && (await tryRefresh())) {
-			return request("/api/auth/me", authUserResponseSchema);
-		}
-		throw error;
-	}
+	return unwrap(await rpc.api.auth.me.$get());
+}
+
+export async function verifyEmail(token: string) {
+	return unwrap(await rpc.api.auth["verify-email"].$post({ json: { token } }));
+}
+
+export async function resendVerification(email: string) {
+	return unwrap(await rpc.api.auth["resend-verification"].$post({ json: { email } }));
 }
 
 /* --------------------------------- quizzes -------------------------------- */
 
-export function searchQuizzes(query = "") {
-	const params = new URLSearchParams();
-	if (query.trim()) params.set("q", query.trim());
-	return request(`/api/quizzes/search?${params.toString()}`, quizListResponseSchema);
+export async function searchQuizzes(query = "") {
+	const q = query.trim();
+	return unwrap(await rpc.api.quizzes.search.$get({ query: q ? { q } : {} }));
 }
 
-export function fetchMyQuizzes() {
-	return request("/api/me/quizzes", quizListResponseSchema);
+export async function fetchMyQuizzes() {
+	return unwrap(await rpc.api.me.quizzes.$get());
 }
 
-export function fetchQuiz(id: string) {
-	return request(`/api/quizzes/${id}`, quizDetailResponseSchema);
+export async function fetchQuiz(id: string) {
+	return unwrap(await rpc.api.quizzes[":id"].$get({ param: { id } }));
 }
 
-export function patchQuiz(id: string, patch: PatchQuizRequest) {
-	const body = patchQuizRequestSchema.parse(patch);
-	return request(`/api/quizzes/${id}`, quizSummaryResponseSchema, jsonInit("PATCH", body));
+export async function patchQuiz(id: string, patch: PatchQuizRequest) {
+	return unwrap(await rpc.api.quizzes[":id"].$patch({ param: { id }, json: patch }));
 }
 
-export function deleteQuiz(id: string) {
-	return request(`/api/quizzes/${id}`, okResponseSchema, { method: "DELETE" });
+export async function deleteQuiz(id: string) {
+	return unwrap(await rpc.api.quizzes[":id"].$delete({ param: { id } }));
 }
 
-export function setQuizPublished(id: string, published: boolean) {
-	return request(
-		`/api/quizzes/${id}/${published ? "publish" : "unpublish"}`,
-		quizSummaryResponseSchema,
-		{ method: "POST" },
-	);
+export async function setQuizPublished(id: string, published: boolean) {
+	const endpoint = published
+		? rpc.api.quizzes[":id"].publish
+		: rpc.api.quizzes[":id"].unpublish;
+	return unwrap(await endpoint.$post({ param: { id } }));
 }
 
-export function uploadQuiz(file: File, visibility: "private" | "public") {
-	const formData = new FormData();
-	formData.set("file", file);
-	formData.set("visibility", visibility);
-	return request("/api/quizzes/upload", quizSummaryResponseSchema, {
-		method: "POST",
-		body: formData,
-	});
+export async function uploadQuiz(file: File, visibility: "private" | "public") {
+	return unwrap(await rpc.api.quizzes.upload.$post({ form: { file, visibility } }));
 }
 
 /* -------------------------------- attempts -------------------------------- */
 
-export function startAttempt(quizId: string, mode = "practice") {
-	const body = startAttemptRequestSchema.parse({ mode });
-	return request(
-		`/api/quizzes/${quizId}/attempts`,
-		startAttemptResponseSchema,
-		jsonInit("POST", body),
-	);
+export async function startAttempt(quizId: string, mode: "practice" | "exam" | "review" = "practice") {
+	return unwrap(await rpc.api.quizzes[":id"].attempts.$post({ param: { id: quizId }, json: { mode } }));
 }
 
-export function submitAnswer(attemptId: string, input: SubmitAnswerRequest) {
-	const body = submitAnswerRequestSchema.parse(input);
-	return request(
-		`/api/attempts/${attemptId}/answers`,
-		submitAnswerResponseSchema,
-		jsonInit("POST", body),
-	);
+export async function submitAnswer(attemptId: string, input: SubmitAnswerRequest) {
+	return unwrap(await rpc.api.attempts[":id"].answers.$post({ param: { id: attemptId }, json: input }));
 }
 
-export function finishAttempt(attemptId: string) {
-	return request(`/api/attempts/${attemptId}/finish`, finishAttemptResponseSchema, {
-		method: "POST",
-	});
+export async function finishAttempt(attemptId: string) {
+	return unwrap(await rpc.api.attempts[":id"].finish.$post({ param: { id: attemptId } }));
 }
 
 /* ---------------------------------- me ------------------------------------ */
 
-export function fetchStats() {
-	return request("/api/me/stats", statsResponseSchema);
+export async function fetchStats() {
+	return unwrap(await rpc.api.me.stats.$get());
 }
 
-export function fetchHistory() {
-	return request("/api/me/history", historyResponseSchema);
+export async function fetchHistory() {
+	return unwrap(await rpc.api.me.history.$get());
 }
 
 /* --------------------------------- social --------------------------------- */
 
-export function fetchProfile(username: string) {
-	return request(`/api/users/${username}`, profileResponseSchema);
+export async function fetchProfile(username: string) {
+	return unwrap(await rpc.api.users[":username"].$get({ param: { username } }));
 }
 
-export function setFollow(username: string, follow: boolean) {
-	return request(`/api/users/${username}/follow`, okResponseSchema, {
-		method: follow ? "POST" : "DELETE",
-	});
+export async function setFollow(username: string, follow: boolean) {
+	const endpoint = rpc.api.users[":username"].follow;
+	const response = follow
+		? await endpoint.$post({ param: { username } })
+		: await endpoint.$delete({ param: { username } });
+	return unwrap(response);
 }
 
 /* --------------------------------- groups --------------------------------- */
 
-export function fetchGroups() {
-	return request("/api/groups", groupListResponseSchema);
+export async function fetchGroups() {
+	return unwrap(await rpc.api.groups.$get());
 }
 
-export function createGroup(input: CreateGroupRequest) {
-	const body = createGroupRequestSchema.parse(input);
-	return request("/api/groups", createGroupResponseSchema, jsonInit("POST", body));
+export async function createGroup(input: CreateGroupRequest) {
+	return unwrap(await rpc.api.groups.$post({ json: input }));
 }
 
-export function fetchGroup(id: string) {
-	return request(`/api/groups/${id}`, groupDetailResponseSchema);
+export async function fetchGroup(id: string) {
+	return unwrap(await rpc.api.groups[":id"].$get({ param: { id } }));
 }
 
-export function joinGroup(id: string) {
-	return request(`/api/groups/${id}/join`, okResponseSchema, { method: "POST" });
+export async function joinGroup(id: string) {
+	return unwrap(await rpc.api.groups[":id"].join.$post({ param: { id } }));
 }
 
-export function leaveGroup(id: string) {
-	return request(`/api/groups/${id}/leave`, okResponseSchema, { method: "POST" });
+export async function leaveGroup(id: string) {
+	return unwrap(await rpc.api.groups[":id"].leave.$post({ param: { id } }));
 }
 
-export function shareQuiz(groupId: string, quizId: string) {
-	const body = shareQuizRequestSchema.parse({ quizId });
-	return request(`/api/groups/${groupId}/quizzes`, okResponseSchema, jsonInit("POST", body));
+export async function shareQuiz(groupId: string, quizId: string) {
+	return unwrap(await rpc.api.groups[":id"].quizzes.$post({ param: { id: groupId }, json: { quizId } }));
 }
 
-export function fetchGroupMessages(id: string) {
-	return request(`/api/groups/${id}/messages`, groupMessagesResponseSchema);
+export async function fetchGroupMessages(id: string) {
+	return unwrap(await rpc.api.groups[":id"].messages.$get({ param: { id } }));
 }
 
 export function groupChatUrl(id: string) {
@@ -288,4 +206,14 @@ export function groupChatUrl(id: string) {
 	const base = API_BASE ? new URL(API_BASE) : new URL(window.location.href);
 	const protocol = base.protocol === "https:" ? "wss:" : "ws:";
 	return `${protocol}//${base.host}/api/groups/${id}/chat`;
+}
+
+/* ----------------------------------- ai ------------------------------------ */
+
+export async function createAiJob(input: CreateAiJobRequest) {
+	return unwrap(await rpc.api.ai.jobs.$post({ json: input }));
+}
+
+export async function fetchAiJob(jobId: string) {
+	return unwrap(await rpc.api.ai.jobs[":jobId"].$get({ param: { jobId } }));
 }

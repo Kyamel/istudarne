@@ -68,8 +68,13 @@ app.use(
 const csrfProtection = csrf({ origin: isAllowedOrigin });
 app.use("/api/*", (c, next) => (c.req.header("Authorization") ? next() : csrfProtection(c, next)));
 app.use("/api/*", unlessWebSocket(secureHeaders()));
-app.use("/api/*", unlessWebSocket(etag()));
-app.use("/api/*", prettyJSON());
+app.use("/api/*", async (c, next) => {
+	if (c.req.method !== "GET") {
+		return next();
+	}
+	return unlessWebSocket(etag())(c, next);
+});
+app.use("/api/*", unlessWebSocket(prettyJSON()));
 app.use(
 	"/api/*",
 	bodyLimit({

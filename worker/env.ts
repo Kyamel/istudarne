@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from "@hono/zod-openapi";
-import type { Container } from "@server/container";
-import type { AuthUser } from "@server/domain/types";
+import type { Container } from "@api/server/container";
+import type { AuthUser } from "@api/server/domain/types";
 
 export type HonoEnv = {
 	Bindings: Env;
