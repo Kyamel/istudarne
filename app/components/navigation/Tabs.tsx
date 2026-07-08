@@ -34,7 +34,7 @@ export default function Tabs<T extends string>({
 					key={option.value}
 					aria-selected={value === option.value}
 					className={cx(
-						"min-h-10 cursor-pointer rounded-full border-0 bg-transparent px-4.5 py-2.25 font-bold text-fg-muted aria-selected:bg-surface-raised aria-selected:text-fg aria-selected:shadow-pop",
+						"min-h-9 cursor-pointer rounded-full border-0 bg-transparent px-3.5 py-1.5 text-[0.92rem] font-bold text-fg-muted aria-selected:bg-surface-raised aria-selected:text-fg aria-selected:shadow-pop",
 						grow && "flex-1",
 					)}
 					onClick={() => onChange(option.value)}

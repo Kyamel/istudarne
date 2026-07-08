@@ -6,7 +6,7 @@ export default function FormCard({ className, ...props }: FormHTMLAttributes<HTM
 	return (
 		<form
 			className={cx(
-				"grid gap-4 rounded-card border border-edge bg-surface p-5 shadow-card",
+				"grid gap-3 rounded-card border border-edge bg-surface p-4 shadow-card",
 				className,
 			)}
 			{...props}

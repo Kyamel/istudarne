@@ -22,15 +22,19 @@ export default function PageHeader({
 }: PageHeaderProps) {
 	return (
 		<header
-			className={cx("flex flex-wrap items-start justify-between gap-4", column && "flex-col")}
+			className={cx("flex flex-wrap items-start justify-between gap-3", column && "flex-col")}
 		>
 			{leading}
 			<div className={column ? "" : "min-w-[min(100%,22rem)] flex-[1_1_22rem]"}>
-				<p className="text-[0.78rem] font-extrabold tracking-[0.03em] text-secondary uppercase">
+				<p className="text-[0.72rem] font-extrabold tracking-[0.08em] text-secondary uppercase">
 					{eyebrow}
 				</p>
-				<h1 className="mt-1 mb-2.5 text-[clamp(1.7rem,5vw,2.8rem)] leading-[1.05]">{title}</h1>
-				{description ? <p className="max-w-[60ch] text-fg-muted">{description}</p> : null}
+				<h1 className="mt-0.5 mb-1.5 text-[clamp(1.35rem,3.5vw,1.9rem)] leading-[1.15] tracking-tight">
+					{title}
+				</h1>
+				{description ? (
+					<p className="max-w-[60ch] text-[0.95rem] text-fg-muted">{description}</p>
+				) : null}
 				{children}
 			</div>
 			{actions}

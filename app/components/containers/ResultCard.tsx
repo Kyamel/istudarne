@@ -10,9 +10,9 @@ type ResultCardProps = {
 
 export default function ResultCard({ eyebrow, title, children }: ResultCardProps) {
 	return (
-		<article className="grid gap-3 rounded-card border border-edge bg-surface p-5 text-center shadow-card">
+		<article className="grid gap-2.5 rounded-card border border-edge bg-surface p-4 text-center shadow-card">
 			<Eyebrow>{eyebrow}</Eyebrow>
-			<h1 className="text-[clamp(1.7rem,5vw,2.8rem)] leading-[1.05]">{title}</h1>
+			<h1 className="text-[clamp(1.4rem,4vw,2rem)] leading-[1.1] tracking-tight">{title}</h1>
 			{children}
 		</article>
 	);

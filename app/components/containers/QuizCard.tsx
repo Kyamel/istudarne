@@ -6,11 +6,11 @@ import ButtonLink from "../navigation/ButtonLink";
 
 export default function QuizCard({ quiz }: { quiz: QuizSummary }) {
 	return (
-		<article className="grid gap-3.5 rounded-card border border-edge bg-surface p-5 shadow-card">
+		<article className="grid gap-2.5 rounded-card border border-edge bg-surface p-4 shadow-card">
 			<div>
 				<VisibilityTag visibility={quiz.visibility} />
-				<h2 className="mt-2.5 mb-3 text-xl">{quiz.title}</h2>
-				<p className="text-fg-muted">{quiz.description || "—"}</p>
+				<h2 className="mt-2 mb-1 text-[1.05rem] leading-snug">{quiz.title}</h2>
+				<p className="text-[0.92rem] text-fg-muted">{quiz.description || "—"}</p>
 			</div>
 			{quiz.tags.length ? <TagRow tags={quiz.tags} /> : null}
 			<footer className="flex flex-wrap items-center justify-between gap-2.5">

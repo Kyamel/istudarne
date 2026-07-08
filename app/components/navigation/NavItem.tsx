@@ -16,9 +16,9 @@ export default function NavItem({ to, end, onNavigate, children }: NavItemProps)
 			end={end}
 			className={({ isActive }) =>
 				cx(
-					"flex min-h-10 items-center rounded-field px-3 py-2 font-medium no-underline transition-colors",
+					"flex min-h-9 items-center rounded-field px-3 py-1.5 text-[0.92rem] font-medium no-underline transition-colors",
 					isActive
-						? "bg-surface-muted text-fg shadow-[inset_2px_0_0_var(--primary)]"
+						? "bg-primary-soft text-fg shadow-[inset_2px_0_0_var(--primary)]"
 						: "text-fg-muted hover:bg-surface-muted hover:text-fg",
 				)
 			}

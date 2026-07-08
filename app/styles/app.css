@@ -36,9 +36,11 @@
 	--radius-card: var(--radius-md);
 	--radius-panel: var(--radius-lg);
 
-	--shadow-pop: 0 4px 12px var(--shadow);
-	--shadow-card: 0 8px 24px var(--shadow);
-	--shadow-modal: 0 24px 60px var(--shadow-lg);
+	/* Obsidian-flat: cards are defined by border + tonal step, not by floating
+	   shadows — keep elevation almost imperceptible except for overlays. */
+	--shadow-pop: 0 2px 8px var(--shadow);
+	--shadow-card: 0 1px 2px var(--shadow);
+	--shadow-modal: 0 16px 48px var(--shadow-lg);
 
 	--breakpoint-desktop: 56.25rem;
 

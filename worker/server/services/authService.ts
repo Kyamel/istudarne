@@ -6,6 +6,9 @@ import type { UserRepository } from "../repositories/userRepository";
 
 const REFRESH_TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const EMAIL_VERIFICATION_TTL_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
+/* Server-side floor for resending verification emails; the client mirrors it
+   with a countdown, but the server is the actual enforcement. */
+const RESEND_COOLDOWN_MS = 1000 * 60;
 
 export const REFRESH_TOKEN_TTL_SECONDS = Math.floor(REFRESH_TOKEN_TTL_MS / 1000);
 export { ACCESS_TOKEN_TTL_SECONDS };
@@ -164,14 +167,21 @@ export function createAuthService(users: UserRepository, jwtSecret: string) {
 
 		/**
 		 * Issues a fresh verification token for an unverified account. Returns
-		 * null when the email is unknown or already verified so the route can
-		 * answer identically either way (no account enumeration).
+		 * null when the email is unknown, already verified, or a token was
+		 * issued less than a minute ago (resend cooldown) — the route answers
+		 * identically in every case, so nothing leaks about the account.
 		 */
 		async requestEmailVerification(
 			email: string,
 		): Promise<{ user: AuthUser; token: string } | null> {
 			const user = await users.getByEmail(email);
 			if (!user || user.emailVerifiedAt !== null) return null;
+
+			const lastIssuedAt = await users.getLatestEmailVerificationTokenTime(user.id);
+			if (lastIssuedAt && Date.now() - lastIssuedAt.getTime() < RESEND_COOLDOWN_MS) {
+				return null;
+			}
+
 			return { user: toAuthUser(user), token: await issueEmailVerificationToken(user.id) };
 		},
 	};

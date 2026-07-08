@@ -23,13 +23,13 @@ export default function Panel({
 	return (
 		<article
 			className={cx(
-				"grid gap-3 rounded-card border border-edge bg-surface p-5 shadow-card",
+				"grid gap-2.5 rounded-card border border-edge bg-surface p-4 shadow-card",
 				accents[accent],
 				className,
 			)}
 			{...props}
 		>
-			{title ? <h2 className="text-xl">{title}</h2> : null}
+			{title ? <h2 className="text-[1.05rem]">{title}</h2> : null}
 			{children}
 		</article>
 	);

@@ -3,6 +3,7 @@ import { type CreateUserInput, createUser } from "../queries/users/createUser";
 import {
 	type CreateEmailVerificationTokenInput,
 	getEmailVerificationTokenByHash,
+	getLatestEmailVerificationTokenTime,
 	insertEmailVerificationToken,
 	markEmailVerificationTokenUsed,
 	markUserEmailVerified,
@@ -35,6 +36,8 @@ export function createUserRepository(db: Database) {
 			insertEmailVerificationToken(db, input),
 		getEmailVerificationTokenByHash: (tokenHash: string) =>
 			getEmailVerificationTokenByHash(db, tokenHash),
+		getLatestEmailVerificationTokenTime: (userId: string) =>
+			getLatestEmailVerificationTokenTime(db, userId),
 		markEmailVerificationTokenUsed: (id: string) => markEmailVerificationTokenUsed(db, id),
 		markEmailVerified: (userId: string) => markUserEmailVerified(db, userId),
 	};

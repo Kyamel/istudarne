@@ -12,7 +12,7 @@ export default function Page({ children, compact, narrow }: PageProps) {
 		<section
 			className={cx(
 				"mx-auto grid w-full",
-				compact ? "gap-3" : "gap-6",
+				compact ? "gap-2.5" : "gap-4",
 				narrow ? "max-w-190" : "max-w-280",
 			)}
 		>

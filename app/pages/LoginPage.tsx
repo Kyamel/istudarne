@@ -1,5 +1,5 @@
 import type { SubmitEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	Brand,
 	Button,
@@ -11,11 +11,14 @@ import {
 	StatusMessage,
 	Tabs,
 } from "../components";
-import { ApiError } from "../lib/api";
+import { ApiError, resendVerification } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { m } from "../lib/i18n";
 
 type Mode = "login" | "register";
+
+/* Mirrors the server-side resend cooldown (authService). */
+const RESEND_COOLDOWN_MS = 60_000;
 
 export default function LoginPage() {
 	const { login, register } = useAuth();
@@ -27,6 +30,19 @@ export default function LoginPage() {
 	const [error, setError] = useState("");
 	const [info, setInfo] = useState("");
 	const [busy, setBusy] = useState(false);
+	/* The resend affordance appears when the account is known to be unverified:
+	   right after registration, or when login fails with 403. */
+	const [canResend, setCanResend] = useState(false);
+	const [resendReadyAt, setResendReadyAt] = useState(0);
+	const [now, setNow] = useState(() => Date.now());
+
+	const cooldownSeconds = Math.max(0, Math.ceil((resendReadyAt - now) / 1000));
+
+	useEffect(() => {
+		if (resendReadyAt <= Date.now()) return;
+		const timer = setInterval(() => setNow(Date.now()), 1000);
+		return () => clearInterval(timer);
+	}, [resendReadyAt]);
 
 	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -42,7 +58,29 @@ export default function LoginPage() {
 				setMode("login");
 				setPassword("");
 				setInfo(m.auth_verification_sent());
+				// Registration already sent one email; open the resend option
+				// but start it on cooldown.
+				setCanResend(true);
+				setResendReadyAt(Date.now() + RESEND_COOLDOWN_MS);
 			}
+		} catch (err) {
+			if (err instanceof ApiError && err.status === 403) setCanResend(true);
+			setError(
+				err instanceof ApiError || err instanceof Error ? err.message : m.auth_generic_error(),
+			);
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function handleResend() {
+		setError("");
+		setBusy(true);
+		try {
+			await resendVerification(email);
+			setInfo(m.auth_verification_sent());
+			setResendReadyAt(Date.now() + RESEND_COOLDOWN_MS);
+			setNow(Date.now());
 		} catch (err) {
 			setError(
 				err instanceof ApiError || err instanceof Error ? err.message : m.auth_generic_error(),
@@ -130,6 +168,19 @@ export default function LoginPage() {
 								? m.auth_submit_login()
 								: m.auth_submit_register()}
 					</Button>
+
+					{canResend && email ? (
+						<Button
+							type="button"
+							variant="ghost"
+							disabled={busy || cooldownSeconds > 0}
+							onClick={() => void handleResend()}
+						>
+							{cooldownSeconds > 0
+								? m.auth_resend_wait({ seconds: cooldownSeconds })
+								: m.auth_resend_verification()}
+						</Button>
+					) : null}
 				</form>
 
 				<p className="text-center text-[0.88rem] text-fg-muted">

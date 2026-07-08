@@ -124,7 +124,7 @@ function Shell() {
 			{navOpen ? <Backdrop label={m.nav_close_menu()} onClick={closeNav} /> : null}
 
 			<aside
-				className="fixed inset-y-0 left-0 z-40 flex w-[min(86vw,300px)] translate-x-[-105%] flex-col gap-7 overflow-y-auto border-r border-edge bg-surface-tint p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] transition-transform duration-200 group-data-[nav-open=true]:translate-x-0 desktop:sticky desktop:top-0 desktop:h-screen desktop:w-auto desktop:translate-x-0 desktop:transition-none"
+				className="fixed inset-y-0 left-0 z-40 flex w-[min(86vw,280px)] translate-x-[-105%] flex-col gap-5 overflow-y-auto border-r border-edge bg-surface-tint p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] transition-transform duration-200 group-data-[nav-open=true]:translate-x-0 desktop:sticky desktop:top-0 desktop:h-screen desktop:w-auto desktop:translate-x-0 desktop:transition-none"
 				id="primary-navigation"
 				aria-label={m.nav_sections()}
 			>
@@ -143,7 +143,7 @@ function Shell() {
 					) : null}
 				</nav>
 
-				<footer className="mt-auto grid gap-3 border-t border-edge pt-4.5">
+				<footer className="mt-auto grid gap-2.5 border-t border-edge pt-3.5">
 					{user ? <AccountBadge displayName={user.displayName} username={user.username} /> : null}
 
 					<button
@@ -175,7 +175,7 @@ function Shell() {
 			</aside>
 
 			<main
-				className="px-4.5 pt-6 pb-[calc(4rem+env(safe-area-inset-bottom))] outline-none desktop:p-10"
+				className="px-4 pt-4 pb-[calc(3rem+env(safe-area-inset-bottom))] outline-none desktop:px-8 desktop:py-6"
 				id="main-content"
 				tabIndex={-1}
 			>

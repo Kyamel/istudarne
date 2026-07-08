@@ -3,34 +3,39 @@
    the @theme mapping in app.css, so switching light/dark only swaps variables.
 
    Direction: Obsidian-like "matte utility" look — near-neutral grays separated
-   by small tonal steps rather than strong borders, a single violet accent
-   reserved for selection, focus, links and primary actions, subtle radii and
-   soft shadows. Semantic colors (danger/warning/success) stay desaturated. */
+   by small tonal steps, a single violet accent reserved for selection, focus,
+   links and primary actions, subtle radii and soft shadows. Semantic colors
+   stay desaturated.
+
+   Contrast contract (WCAG): text ≥ 7:1, text-muted ≥ 7:1, text-soft ≥ 4.5:1
+   on --surface; every semantic text-on-soft pairing ≥ 4.5:1. In dark mode the
+   interactive surfaces (muted/raised) sit ABOVE --surface so hover/active
+   states are visible; in light mode they sit below (toward gray). */
 
 :root {
-	--bg: #f6f6f6;
+	--bg: #f3f3f5;
 	--surface: #ffffff;
-	--surface-muted: #ececec;
+	--surface-muted: #ebebee;
 	--surface-raised: #ffffff;
-	--surface-tint: #efefef;
-	--text: #222222;
-	--text-muted: #6a6a6a;
-	--text-soft: #9a9a9a;
-	--border: #e2e2e2;
-	--border-strong: #c9c9c9;
+	--surface-tint: #ededf0;
+	--text: #1e1e24;
+	--text-muted: #565660;
+	--text-soft: #71717c;
+	--border: #dcdce2;
+	--border-strong: #b4b4bf;
 	--primary: #7c3aed;
 	--primary-hover: #6d28d9;
-	--primary-soft: #ede9fe;
-	--secondary: #6a6a6a;
-	--secondary-soft: #ececec;
-	--danger: #c24f4f;
-	--danger-soft: #f7e0e0;
-	--warning: #a87b2f;
-	--warning-soft: #f4ead4;
-	--success: #4f9d69;
-	--success-soft: #def0e4;
-	--shadow: rgba(0, 0, 0, 0.07);
-	--shadow-lg: rgba(0, 0, 0, 0.14);
+	--primary-soft: #ece7fd;
+	--secondary: #565660;
+	--secondary-soft: #e7e7ec;
+	--danger: #b23b3b;
+	--danger-soft: #f9e3e3;
+	--warning: #85590f;
+	--warning-soft: #f5ead2;
+	--success: #276e45;
+	--success-soft: #ddf1e3;
+	--shadow: rgba(20, 20, 30, 0.08);
+	--shadow-lg: rgba(20, 20, 30, 0.16);
 	--focus-ring: rgba(124, 58, 237, 0.4);
 	--radius-sm: 6px;
 	--radius-md: 8px;
@@ -38,28 +43,28 @@
 }
 
 :root[data-theme="dark"] {
-	--bg: #202020;
-	--surface: #262626;
-	--surface-muted: #1c1c1c;
-	--surface-raised: #2d2d2d;
-	--surface-tint: #191919;
-	--text: #dcddde;
-	--text-muted: #999999;
-	--text-soft: #6f6f6f;
-	--border: #363636;
-	--border-strong: #4a4a4a;
+	--bg: #1c1c21;
+	--surface: #25252b;
+	--surface-muted: #2f2f38;
+	--surface-raised: #34343e;
+	--surface-tint: #17171b;
+	--text: #e8e8ec;
+	--text-muted: #b6b6c0;
+	--text-soft: #8f8f9a;
+	--border: #3b3b44;
+	--border-strong: #565662;
 	--primary: #7c3aed;
 	--primary-hover: #8b5cf6;
-	--primary-soft: #2a2144;
-	--secondary: #a3a3a3;
-	--secondary-soft: #2e2e2e;
-	--danger: #e06c75;
-	--danger-soft: #3a2628;
-	--warning: #d19a66;
-	--warning-soft: #3a2f22;
-	--success: #98c379;
-	--success-soft: #2a3324;
-	--shadow: rgba(0, 0, 0, 0.3);
-	--shadow-lg: rgba(0, 0, 0, 0.5);
-	--focus-ring: rgba(139, 92, 246, 0.5);
+	--primary-soft: #322553;
+	--secondary: #b0b0ba;
+	--secondary-soft: #32323a;
+	--danger: #e57883;
+	--danger-soft: #42272b;
+	--warning: #dba15f;
+	--warning-soft: #3d3122;
+	--success: #9fcb80;
+	--success-soft: #2c3823;
+	--shadow: rgba(0, 0, 0, 0.35);
+	--shadow-lg: rgba(0, 0, 0, 0.55);
+	--focus-ring: rgba(139, 92, 246, 0.55);
 }
