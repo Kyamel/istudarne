@@ -5,6 +5,9 @@
 		"noEmit": false,
 		"emitDeclarationOnly": true,
 		"declaration": true,
-		"outDir": ".rpc"
+		"outDir": ".rpc",
+		/* Skip re-emit when worker/shared sources are unchanged (predev cache). */
+		"incremental": true,
+		"tsBuildInfoFile": ".rpc/.tsbuildinfo"
 	}
 }
