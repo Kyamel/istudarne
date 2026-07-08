@@ -25,7 +25,7 @@ Everything (SPA + API) ships as a single Cloudflare Worker.
 
 Request path: `index.ts` (middleware stack) → route handler → service → repository → query.
 
-- `worker/index.ts` — middleware (requestId, logger, CORS allowlist via `ALLOWED_ORIGINS` var, CSRF for cookie clients — skipped when an `Authorization` header is present, secureHeaders, etag, prettyJSON, bodyLimit 5 MB, rate limiters, DI, auth). Middleware that touches response headers/body is wrapped in `unlessWebSocket` so the chat upgrade (101) passes through. Default export is `{ fetch, queue }` — the Worker is also the queue consumer.
+- `worker/index.ts` — middleware (requestId, logger, CORS allowlist via `ALLOWED_ORIGINS` var, CSRF for cookie clients — skipped when an `Authorization` header is present, secureHeaders, etag, prettyJSON, bodyLimit 5 MB, rate limiters, DI, auth). Middleware that touches response headers/body is wrapped in `unlessWebSocket` so the chat upgrade (101) passes through. HTML pages (landing, share, SPA shell) get a CSP via `pageSecureHeaders` (`script-src 'self'` in prod, relaxed in dev for Vite HMR; `/docs` excluded because Swagger UI loads from CDN) — asset responses are re-wrapped in `notFound` because fetch() headers are immutable. Default export is `{ fetch, queue }` — the Worker is also the queue consumer.
 - `worker/routes/**` — **one file per endpoint**, exporting a `createRoute` definition + a `RouteHandler`-typed handler. `routes/index.ts` chains every `.openapi(route, handler)` call and exports `type ApiRoutes`; that type powers the RPC client in `app/lib/rpc.ts` (`hc<ApiRoutes>`). New endpoints MUST be added to the chain (keeps Swagger and RPC complete) and specific paths must be registered before parametric ones.
 - `worker/server/` — framework-free domain code: `services/` (business logic), `repositories/` (one object per aggregate), `queries/` (one file per query), `container.ts` (per-request DI, built once in `middleware/di.ts`).
 - Errors: throw `AppError` (`worker/server/errors.ts`); `http/errorHandler.ts` maps `AppError` and Hono `HTTPException` to `{ error }` JSON. Zod validation failures use the same shape via the `defaultHook` in `index.ts`.
@@ -44,7 +44,7 @@ Do NOT split the project to "decouple" app from worker — the type coupling is 
 
 - **Access token**: 15-min JWT (HS256, `JWT_SECRET` secret) — `worker/server/auth/jwt.ts`.
 - **Refresh token**: opaque, SHA-256-hashed in `refresh_tokens` (30 days), **rotated on every refresh**; reusing a rotated token revokes all of the user's sessions (`authService.refresh`).
-- **Two transports**: web app uses httpOnly cookies (`istudarne_access` on `/`, `istudarne_refresh` scoped to `/api/auth`); native apps use `Authorization: Bearer` and receive tokens in the login/refresh JSON body. `middleware/auth.ts` resolves both.
+- **Two transports**: web app uses httpOnly cookies (`istudarne_access` on `/`, `istudarne_refresh` scoped to `/api/auth`); native apps use `Authorization: Bearer` and receive tokens in the login/refresh JSON body. `middleware/auth.ts` resolves both. `/api/auth/refresh` echoes `tokens` in the body **only** when the refresh token came in the body — cookie clients get cookies only, so page scripts (XSS) can never read the refresh token.
 - **Email verification is required before login** (403 otherwise). Register issues no tokens; Resend sends the link (`services/emailService.ts`). Without `RESEND_API_KEY` (dev), the magic link is logged to the console as `event: "email.verification_link"`. `POST /api/auth/resend-verification` is unauthenticated by email and always answers ok (no account enumeration).
 - The web client auto-refreshes on 401 (`app/lib/api.ts`).
 - OAuth2 (Google) is prepared but not implemented: `users.google_id` + `email_verified_at` columns exist; a future flow should create/link the user then reuse `issueTokens`.
@@ -61,6 +61,7 @@ Cloudflare `ratelimits` bindings (`AUTH_RATE_LIMITER` 10/min, `AI_RATE_LIMITER` 
 
 - Code, comments, docs, commit messages: **English only** (UI strings go through Paraglide i18n).
 - Tailwind classes stay inside components; merge them with `cx()` (`app/lib/classes.ts`, clsx + tailwind-merge).
+- Static assets: `public/` (Vite publicDir, copied verbatim to `dist/client`, referenced by URL — favicons, og-images like `/istudarne.webp`, robots.txt; also what the worker's server-rendered pages must use). Images imported by React components go in `app/assets/` (hashed/bundled by Vite). There is no `worker/assets/` — the Worker serves statics only through the ASSETS binding.
 - API stays RAG-friendly: OpenAPI spec, `/llms.txt`, Markdown quiz export (`/api/quizzes/:id/export?format=markdown`).
 
 ## Deploy checklist

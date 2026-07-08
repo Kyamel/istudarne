@@ -52,3 +52,8 @@ profiles with follow, groups with realtime chat, publish/unpublish, i18n
 Next (see [APP_GAMIFICADO_SERVERLESS.md](APP_GAMIFICADO_SERVERLESS.md)):
 achievements and leaderboards, tag-based search filters, password recovery,
 semantic search with Vectorize, audio rooms.
+
+## Credits
+
+- Logo: [flat design library logo template](https://www.magnific.com/free-vector/flat-design-library-logo-template_24005402.htm) by Freepik (free license — attribution required; also credited in the landing page footer).
+- Font: [Poppins](https://fonts.google.com/specimen/Poppins) by Indian Type Foundry & Jonny Pinhorn (see `app/assets/Fonts.txt`).

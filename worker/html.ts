@@ -61,6 +61,9 @@ export function renderLandingPage(locale: Locale, origin: string) {
           </div>
         </section>
       </main>
+      <footer style="padding: 1.25rem; text-align: center; font-size: 0.75rem; opacity: 0.65;">
+        <a href="https://www.magnific.com/free-vector/flat-design-library-logo-template_24005402.htm" rel="noopener noreferrer" style="color: inherit;">Logo image by Freepik</a>
+      </footer>
     `,
 	});
 }

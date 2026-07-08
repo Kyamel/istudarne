@@ -53,6 +53,43 @@ const unlessWebSocket =
 	(c, next) =>
 		c.req.header("upgrade")?.toLowerCase() === "websocket" ? next() : middleware(c, next);
 
+/* CSP for HTML pages (landing, share pages, and the SPA shell served by the
+   assets binding). The /api stack keeps its own secureHeaders (JSON needs no
+   CSP), and /docs is excluded because Swagger UI loads assets from the
+   jsdelivr CDN. In dev, Vite injects an inline react-refresh preamble and HMR
+   talks over a same-host ws connection, hence the relaxations. */
+const pageSecureHeaders = secureHeaders({
+	contentSecurityPolicy: {
+		defaultSrc: ["'self'"],
+		scriptSrc: import.meta.env.DEV ? ["'self'", "'unsafe-inline'"] : ["'self'"],
+		// 'unsafe-inline' covers the inline <style> of the server-rendered pages
+		// and React style={} attributes; external stylesheets stay same-origin.
+		styleSrc: ["'self'", "'unsafe-inline'"],
+		imgSrc: ["'self'", "data:", "https:"],
+		fontSrc: ["'self'", "data:"],
+		connectSrc: [
+			"'self'",
+			// Group-chat WebSocket (and Vite HMR in dev) on the same host.
+			(c) => {
+				const url = new URL(c.req.url);
+				return `${url.protocol === "https:" ? "wss" : "ws"}://${url.host}`;
+			},
+		],
+		objectSrc: ["'none'"],
+		baseUri: ["'self'"],
+		formAction: ["'self'"],
+		frameAncestors: ["'self'"],
+	},
+});
+
+app.use("*", (c, next) => {
+	const path = c.req.path;
+	if (path.startsWith("/api/") || path.startsWith("/docs") || path.endsWith("/openapi.json")) {
+		return next();
+	}
+	return pageSecureHeaders(c, next);
+});
+
 app.use("/api/*", requestId());
 app.use("/api/*", logger());
 app.use(
@@ -203,6 +240,7 @@ app.get("/share/quizzes/:quizId", async (c) => {
 	);
 });
 
+// /app/* routes are handled by the React SPA, not here.
 registerApiRoutes(app);
 
 app.notFound((c) => {
@@ -214,15 +252,34 @@ app.notFound((c) => {
 	}
 
 	// Only top-level navigation to an unknown route renders the 404 page.
+	// Paths with a file extension are static assets (e.g. /istudarne.webp) and
+	// must reach the assets binding even when navigated to directly (browsers
+	// send Accept: text/html on address-bar navigation).
 	const isAppPath = url.pathname === "/app" || url.pathname.startsWith("/app/");
+	const looksLikeFile = /\.[a-zA-Z0-9]+$/.test(url.pathname);
 	const accept = c.req.header("accept") ?? "";
-	if (!isAppPath && accept.includes("text/html")) {
+	if (!isAppPath && !looksLikeFile && accept.includes("text/html")) {
 		return c.html(renderNotFoundPage(detectLocale(c.req.header("accept-language") ?? null)), 404);
 	}
 
 	// SPA routes, static files, and dev-server modules (e.g. /@vite/client)
-	// are served by the assets binding.
-	return c.env.ASSETS.fetch(c.req.raw);
+	// are served by the assets binding. Re-wrap the response: fetch() responses
+	// have immutable headers, and the page middleware above adds CSP to them.
+	return (async () => {
+		const asset = await c.env.ASSETS.fetch(c.req.raw);
+		// With single-page-application not-found handling, the binding answers
+		// unknown paths with the SPA shell (200 text/html). Getting HTML back
+		// for a file-looking path means the asset does not exist — make it a
+		// real 404 instead of shipping index.html as a fake .webp/.js/...
+		if (
+			looksLikeFile &&
+			!url.pathname.endsWith(".html") &&
+			(asset.headers.get("content-type") ?? "").includes("text/html")
+		) {
+			return c.text("Not found.", 404);
+		}
+		return new Response(asset.body, asset);
+	})();
 });
 
 export { StudyGroupChat };

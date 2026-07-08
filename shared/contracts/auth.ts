@@ -53,8 +53,15 @@ export const refreshRequestSchema = z.object({
 	refreshToken: z.string().min(1).optional(),
 });
 
+/**
+ * `tokens` is only present when the refresh token came in the request body
+ * (native clients). Cookie-transport clients get the new pair exclusively as
+ * httpOnly cookies — echoing it in JSON would let page scripts (XSS) read the
+ * long-lived refresh token.
+ */
 export const refreshResponseSchema = z.object({
-	tokens: authTokensSchema,
+	user: currentUserSchema,
+	tokens: authTokensSchema.optional(),
 });
 
 export const verifyEmailRequestSchema = z.object({
