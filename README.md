@@ -57,3 +57,10 @@ semantic search with Vectorize, audio rooms.
 
 - Logo: [flat design library logo template](https://www.magnific.com/free-vector/flat-design-library-logo-template_24005402.htm) by Freepik (free license — attribution required; also credited in the landing page footer).
 - Font: [Poppins](https://fonts.google.com/specimen/Poppins) by Indian Type Foundry & Jonny Pinhorn (see `app/assets/Fonts.txt`).
+
+## Helpers
+
+Convert .jpg to .webp for logos:
+```bash
+npx sharp-cli --input logo.jpg --output logo.webp --format webp --quality 85 resize 128 128
+``
