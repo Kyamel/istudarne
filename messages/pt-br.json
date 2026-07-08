@@ -37,6 +37,7 @@
 	"auth_hint_login": "Ainda não tem conta? Use a aba “Criar conta”.",
 	"auth_hint_register": "A senha precisa ter ao menos 8 caracteres.",
 	"auth_generic_error": "Não foi possível continuar.",
+	"auth_verification_sent": "Conta criada! Confira sua caixa de entrada e clique no link de verificação; depois é só entrar.",
 	"dashboard_eyebrow": "Painel",
 	"dashboard_greeting": "Olá, {name}",
 	"dashboard_subtitle": "Acompanhe seu progresso, revise pontos fracos e retome os quizzes que movem sua rotina.",

@@ -10,6 +10,7 @@ export type AuthUser = {
 	displayName: string;
 	bio: string | null;
 	avatarUrl: string | null;
+	emailVerified: boolean;
 };
 
 export type QuizSummary = {

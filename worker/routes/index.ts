@@ -1,68 +1,109 @@
 import type { App } from "../env";
-import { registerAnswerAttempt } from "./attempts/answer";
-import { registerCreateAttempt } from "./attempts/create";
-import { registerFinishAttempt } from "./attempts/finish";
-import { registerLogin } from "./auth/login";
-import { registerLogout } from "./auth/logout";
-import { registerMe } from "./auth/me";
-import { registerRegister } from "./auth/register";
-import { registerGroupChat } from "./groups/chat";
-import { registerCreateGroup } from "./groups/create";
-import { registerGroupDetail } from "./groups/detail";
-import { registerListGroups } from "./groups/list";
-import { registerJoinGroup, registerLeaveGroup } from "./groups/membership";
-import { registerGroupMessages } from "./groups/messages";
-import { registerShareQuiz } from "./groups/shareQuiz";
-import { registerHealth } from "./health";
-import { registerMyHistory } from "./me/history";
-import { registerMyStats } from "./me/stats";
-import { registerQuizDetail } from "./quizzes/detail";
-import { registerExportQuiz } from "./quizzes/export";
-import { registerListMyQuizzes } from "./quizzes/listMine";
-import { registerPatchQuiz } from "./quizzes/patch";
-import { registerDeleteQuiz } from "./quizzes/remove";
-import { registerSearchQuizzes } from "./quizzes/search";
-import { registerUploadQuiz } from "./quizzes/upload";
-import { registerPublishQuiz, registerUnpublishQuiz } from "./quizzes/visibility";
-import { registerFollow, registerUnfollow } from "./users/follow";
-import { registerProfile } from "./users/profile";
+import { createAiJobHandler, createAiJobRoute } from "./ai/createJob";
+import { getAiJobHandler, getAiJobRoute } from "./ai/getJob";
+import { answerAttemptHandler, answerAttemptRoute } from "./attempts/answer";
+import { createAttemptHandler, createAttemptRoute } from "./attempts/create";
+import { finishAttemptHandler, finishAttemptRoute } from "./attempts/finish";
+import { loginHandler, loginRoute } from "./auth/login";
+import { logoutHandler, logoutRoute } from "./auth/logout";
+import { meHandler, meRoute } from "./auth/me";
+import { refreshHandler, refreshRoute } from "./auth/refresh";
+import { registerHandler, registerRoute } from "./auth/register";
+import {
+	resendVerificationHandler,
+	resendVerificationRoute,
+	verifyEmailHandler,
+	verifyEmailLinkHandler,
+	verifyEmailLinkRoute,
+	verifyEmailRoute,
+} from "./auth/verifyEmail";
+import { groupChatHandler, groupChatRoute } from "./groups/chat";
+import { createGroupHandler, createGroupRoute } from "./groups/create";
+import { groupDetailHandler, groupDetailRoute } from "./groups/detail";
+import { listGroupsHandler, listGroupsRoute } from "./groups/list";
+import {
+	joinGroupHandler,
+	joinGroupRoute,
+	leaveGroupHandler,
+	leaveGroupRoute,
+} from "./groups/membership";
+import { groupMessagesHandler, groupMessagesRoute } from "./groups/messages";
+import { shareQuizHandler, shareQuizRoute } from "./groups/shareQuiz";
+import { healthHandler, healthRoute } from "./health";
+import { myHistoryHandler, myHistoryRoute } from "./me/history";
+import { myStatsHandler, myStatsRoute } from "./me/stats";
+import { quizDetailHandler, quizDetailRoute } from "./quizzes/detail";
+import { exportQuizHandler, exportQuizRoute } from "./quizzes/export";
+import { listMyQuizzesHandler, listMyQuizzesRoute } from "./quizzes/listMine";
+import { patchQuizHandler, patchQuizRoute } from "./quizzes/patch";
+import { deleteQuizHandler, deleteQuizRoute } from "./quizzes/remove";
+import { searchQuizzesHandler, searchQuizzesRoute } from "./quizzes/search";
+import { uploadQuizHandler, uploadQuizRoute } from "./quizzes/upload";
+import {
+	publishQuizHandler,
+	publishQuizRoute,
+	unpublishQuizHandler,
+	unpublishQuizRoute,
+} from "./quizzes/visibility";
+import { followHandler, followRoute, unfollowHandler, unfollowRoute } from "./users/follow";
+import { profileHandler, profileRoute } from "./users/profile";
 
-/** Registers all API routes (one route registration function per route file). */
+/**
+ * Registers every API route. Each route file exports a `createRoute` definition
+ * (which feeds the OpenAPI document / Swagger UI) plus its handler.
+ *
+ * The calls are chained so the accumulated type describes the whole API: the
+ * exported `ApiRoutes` type powers the type-safe RPC client (`hc<ApiRoutes>`)
+ * used by the web app — see `app/lib/rpc.ts`.
+ */
 export function registerApiRoutes(app: App) {
-	registerHealth(app);
+	return (
+		app
+			.openapi(healthRoute, healthHandler)
 
-	registerRegister(app);
-	registerLogin(app);
-	registerLogout(app);
-	registerMe(app);
+			.openapi(registerRoute, registerHandler)
+			.openapi(loginRoute, loginHandler)
+			.openapi(refreshRoute, refreshHandler)
+			.openapi(logoutRoute, logoutHandler)
+			.openapi(meRoute, meHandler)
+			.openapi(verifyEmailLinkRoute, verifyEmailLinkHandler)
+			.openapi(verifyEmailRoute, verifyEmailHandler)
+			.openapi(resendVerificationRoute, resendVerificationHandler)
 
-	// Specific routes must be registered before parametric routes to avoid route collisions.
-	registerSearchQuizzes(app);
-	registerUploadQuiz(app);
-	registerListMyQuizzes(app);
-	registerMyStats(app);
-	registerMyHistory(app);
-	registerQuizDetail(app);
-	registerExportQuiz(app);
-	registerPatchQuiz(app);
-	registerDeleteQuiz(app);
-	registerPublishQuiz(app);
-	registerUnpublishQuiz(app);
+			// Specific routes must be registered before parametric routes to avoid route collisions.
+			.openapi(searchQuizzesRoute, searchQuizzesHandler)
+			.openapi(uploadQuizRoute, uploadQuizHandler)
+			.openapi(listMyQuizzesRoute, listMyQuizzesHandler)
+			.openapi(myStatsRoute, myStatsHandler)
+			.openapi(myHistoryRoute, myHistoryHandler)
+			.openapi(quizDetailRoute, quizDetailHandler)
+			.openapi(exportQuizRoute, exportQuizHandler)
+			.openapi(patchQuizRoute, patchQuizHandler)
+			.openapi(deleteQuizRoute, deleteQuizHandler)
+			.openapi(publishQuizRoute, publishQuizHandler)
+			.openapi(unpublishQuizRoute, unpublishQuizHandler)
 
-	registerCreateAttempt(app);
-	registerAnswerAttempt(app);
-	registerFinishAttempt(app);
+			.openapi(createAttemptRoute, createAttemptHandler)
+			.openapi(answerAttemptRoute, answerAttemptHandler)
+			.openapi(finishAttemptRoute, finishAttemptHandler)
 
-	registerProfile(app);
-	registerFollow(app);
-	registerUnfollow(app);
+			.openapi(profileRoute, profileHandler)
+			.openapi(followRoute, followHandler)
+			.openapi(unfollowRoute, unfollowHandler)
 
-	registerListGroups(app);
-	registerCreateGroup(app);
-	registerGroupDetail(app);
-	registerJoinGroup(app);
-	registerLeaveGroup(app);
-	registerShareQuiz(app);
-	registerGroupMessages(app);
-	registerGroupChat(app);
+			.openapi(listGroupsRoute, listGroupsHandler)
+			.openapi(createGroupRoute, createGroupHandler)
+			.openapi(groupDetailRoute, groupDetailHandler)
+			.openapi(joinGroupRoute, joinGroupHandler)
+			.openapi(leaveGroupRoute, leaveGroupHandler)
+			.openapi(shareQuizRoute, shareQuizHandler)
+			.openapi(groupMessagesRoute, groupMessagesHandler)
+			.openapi(groupChatRoute, groupChatHandler)
+
+			.openapi(createAiJobRoute, createAiJobHandler)
+			.openapi(getAiJobRoute, getAiJobHandler)
+	);
 }
+
+/** Full API surface; consumed by the RPC client (`hc<ApiRoutes>`). */
+export type ApiRoutes = ReturnType<typeof registerApiRoutes>;

@@ -37,6 +37,7 @@
 	"auth_hint_login": "No account yet? Use the “Create account” tab.",
 	"auth_hint_register": "Your password must have at least 8 characters.",
 	"auth_generic_error": "Could not continue.",
+	"auth_verification_sent": "Account created! Check your inbox and click the verification link, then sign in.",
 	"dashboard_eyebrow": "Dashboard",
 	"dashboard_greeting": "Hi, {name}",
 	"dashboard_subtitle": "Track your progress, review weak spots and resume the quizzes that drive your routine.",

@@ -2,7 +2,7 @@
 	"include": ["**/*", "worker-configuration.d.ts"],
 	"compilerOptions": {
 		"lib": ["DOM", "DOM.Iterable", "ES2022"],
-		"types": ["@cloudflare/workers-types", "node", "vite/client"],
+		"types": ["node", "vite/client"],
 		"target": "ES2022",
 		"module": "ES2022",
 		"moduleResolution": "Bundler",
@@ -10,7 +10,7 @@
 		"paths": {
 			"~/*": ["./app/*"],
 			"@shared/*": ["./shared/*"],
-			"@server/*": ["./worker/server/*"]
+			"@api/*": ["./worker/*"]
 		},
 		"esModuleInterop": true,
 		"verbatimModuleSyntax": true,

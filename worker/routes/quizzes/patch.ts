@@ -1,13 +1,32 @@
-import { patchQuizRequestSchema } from "@shared/contracts";
-import type { App } from "../../env";
-import { container, requireUser } from "../../http/context";
-import { readBody } from "../../http/validate";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { patchQuizRequestSchema, quizSummaryResponseSchema } from "@shared/contracts";
+import type { HonoEnv } from "@api/env";
+import { container, requireUser } from "@api/http/context";
+import { authSecurity, errorResponse, IdParamsSchema, jsonBody, jsonResponse } from "@api/openapi";
 
-export function registerPatchQuiz(app: App) {
-	app.patch("/api/quizzes/:id", async (c) => {
-		const user = requireUser(c);
-		const patch = await readBody(c, patchQuizRequestSchema);
-		const quiz = await container(c).services.quiz.update(c.req.param("id"), user.id, patch);
-		return c.json({ quiz });
-	});
-}
+export const patchQuizRoute = createRoute({
+	method: "patch",
+	path: "/api/quizzes/{id}",
+	tags: ["Quizzes"],
+	summary: "Update quiz metadata",
+	security: authSecurity,
+	request: {
+		params: IdParamsSchema,
+		body: jsonBody(patchQuizRequestSchema),
+	},
+	responses: {
+		200: jsonResponse(quizSummaryResponseSchema, "Updated quiz."),
+		400: errorResponse("Invalid payload."),
+		401: errorResponse("Unauthenticated."),
+		403: errorResponse("Only the owner can edit a quiz."),
+		404: errorResponse("Quiz not found."),
+	},
+});
+
+export const patchQuizHandler: RouteHandler<typeof patchQuizRoute, HonoEnv> = async (c) => {
+	const user = requireUser(c);
+	const { id } = c.req.valid("param");
+	const patch = c.req.valid("json");
+	const quiz = await container(c).services.quiz.update(id, user.id, patch);
+	return c.json({ quiz }, 200);
+};

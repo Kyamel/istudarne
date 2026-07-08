@@ -8,6 +8,20 @@
 			"when": 1781669674132,
 			"tag": "0000_melted_blade",
 			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1783478114010,
+			"tag": "0001_dizzy_dracula",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1783478135529,
+			"tag": "0002_overjoyed_jack_flag",
+			"breakpoints": true
 		}
 	]
 }

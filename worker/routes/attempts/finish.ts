@@ -1,10 +1,28 @@
-import type { App } from "../../env";
-import { container, requireUser } from "../../http/context";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { finishAttemptResponseSchema } from "@shared/contracts";
+import type { HonoEnv } from "@api/env";
+import { container, requireUser } from "@api/http/context";
+import { authSecurity, errorResponse, IdParamsSchema, jsonResponse } from "@api/openapi";
 
-export function registerFinishAttempt(app: App) {
-	app.post("/api/attempts/:id/finish", async (c) => {
-		const user = requireUser(c);
-		const summary = await container(c).services.attempt.finish(c.req.param("id"), user.id);
-		return c.json({ summary });
-	});
-}
+export const finishAttemptRoute = createRoute({
+	method: "post",
+	path: "/api/attempts/{id}/finish",
+	tags: ["Attempts"],
+	summary: "Finish an attempt",
+	security: authSecurity,
+	request: {
+		params: IdParamsSchema,
+	},
+	responses: {
+		200: jsonResponse(finishAttemptResponseSchema, "Attempt summary."),
+		401: errorResponse("Unauthenticated."),
+		404: errorResponse("Attempt not found."),
+	},
+});
+
+export const finishAttemptHandler: RouteHandler<typeof finishAttemptRoute, HonoEnv> = async (c) => {
+	const user = requireUser(c);
+	const { id } = c.req.valid("param");
+	const summary = await container(c).services.attempt.finish(id, user.id);
+	return c.json({ summary }, 200);
+};

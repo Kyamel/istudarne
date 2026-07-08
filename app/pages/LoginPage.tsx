@@ -25,15 +25,24 @@ export default function LoginPage() {
 	const [username, setUsername] = useState("");
 	const [displayName, setDisplayName] = useState("");
 	const [error, setError] = useState("");
+	const [info, setInfo] = useState("");
 	const [busy, setBusy] = useState(false);
 
 	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setError("");
+		setInfo("");
 		setBusy(true);
 		try {
-			if (mode === "login") await login(email, password);
-			else await register({ email, username, displayName, password });
+			if (mode === "login") {
+				await login(email, password);
+			} else {
+				// Registration requires email verification before the first login.
+				await register({ email, username, displayName, password });
+				setMode("login");
+				setPassword("");
+				setInfo(m.auth_verification_sent());
+			}
 		} catch (err) {
 			setError(
 				err instanceof ApiError || err instanceof Error ? err.message : m.auth_generic_error(),
@@ -112,6 +121,7 @@ export default function LoginPage() {
 							{error}
 						</StatusMessage>
 					) : null}
+					{info ? <StatusMessage role="status">{info}</StatusMessage> : null}
 
 					<Button variant="primary" disabled={busy} type="submit">
 						{busy

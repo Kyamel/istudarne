@@ -1,6 +1,20 @@
-import type { App } from "../../env";
-import { requireUser } from "../../http/context";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { authUserResponseSchema } from "@shared/contracts";
+import type { HonoEnv } from "@api/env";
+import { requireUser } from "@api/http/context";
+import { authSecurity, errorResponse, jsonResponse } from "@api/openapi";
 
-export function registerMe(app: App) {
-	app.get("/api/auth/me", (c) => c.json({ user: requireUser(c) }));
-}
+export const meRoute = createRoute({
+	method: "get",
+	path: "/api/auth/me",
+	tags: ["Auth"],
+	summary: "Current user",
+	security: authSecurity,
+	responses: {
+		200: jsonResponse(authUserResponseSchema, "The authenticated user."),
+		401: errorResponse("Unauthenticated."),
+	},
+});
+
+export const meHandler: RouteHandler<typeof meRoute, HonoEnv> = (c) =>
+	c.json({ user: requireUser(c) }, 200);

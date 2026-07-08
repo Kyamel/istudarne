@@ -67,11 +67,40 @@ export class ApiError extends Error {
    Android app (capacitor://localhost) talking to the deployed Worker. */
 const API_BASE: string = import.meta.env.VITE_API_BASE ?? "";
 
+/* Access tokens are short-lived JWTs (~15 min). When a call comes back 401,
+   we rotate the session once via the refresh cookie and retry; concurrent 401s
+   share the same in-flight refresh. */
+let refreshPromise: Promise<boolean> | null = null;
+
+function tryRefresh(): Promise<boolean> {
+	refreshPromise ??= fetch(`${API_BASE}/api/auth/refresh`, {
+		method: "POST",
+		credentials: "include",
+		headers: { "Content-Type": "application/json" },
+		body: "{}",
+	})
+		.then((response) => response.ok)
+		.catch(() => false)
+		.finally(() => {
+			refreshPromise = null;
+		});
+	return refreshPromise;
+}
+
 async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
-	const response = await fetch(`${API_BASE}${path}`, {
+	let response = await fetch(`${API_BASE}${path}`, {
 		credentials: "include",
 		...init,
 	});
+
+	if (response.status === 401 && !path.startsWith("/api/auth/")) {
+		if (await tryRefresh()) {
+			response = await fetch(`${API_BASE}${path}`, {
+				credentials: "include",
+				...init,
+			});
+		}
+	}
 
 	if (!response.ok) {
 		let message = `Request failed: ${response.status}`;
@@ -116,11 +145,19 @@ export function login(input: LoginRequest) {
 }
 
 export function logout() {
-	return request("/api/auth/logout", okResponseSchema, { method: "POST" });
+	return request("/api/auth/logout", okResponseSchema, jsonInit("POST", {}));
 }
 
-export function fetchMe() {
-	return request("/api/auth/me", authUserResponseSchema);
+/** Boot-time session probe: refreshes once if the access token has expired. */
+export async function fetchMe() {
+	try {
+		return await request("/api/auth/me", authUserResponseSchema);
+	} catch (error) {
+		if (error instanceof ApiError && error.status === 401 && (await tryRefresh())) {
+			return request("/api/auth/me", authUserResponseSchema);
+		}
+		throw error;
+	}
 }
 
 /* --------------------------------- quizzes -------------------------------- */

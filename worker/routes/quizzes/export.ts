@@ -1,6 +1,8 @@
-import type { QuizDetail } from "@shared/contracts";
-import type { App } from "../../env";
-import { container, currentUser } from "../../http/context";
+import { createRoute, type RouteHandler, z } from "@hono/zod-openapi";
+import { type QuizDetail, quizDetailResponseSchema } from "@shared/contracts";
+import type { HonoEnv } from "@api/env";
+import { container, currentUser } from "@api/http/context";
+import { errorResponse, IdParamsSchema } from "@api/openapi";
 
 /* Renders a quiz as self-contained Markdown, one section per question.
    This shape chunks cleanly for embeddings in RAG pipelines. */
@@ -31,24 +33,51 @@ function quizToMarkdown(quiz: QuizDetail): string {
 	return [...header, ...questions].filter((line) => line !== null).join("\n");
 }
 
-/* GET /api/quizzes/:id/export?format=json|markdown
-   Machine-readable export of a quiz (including answers and explanations) for
+const ExportQuerySchema = z.object({
+	format: z
+		.enum(["json", "markdown"])
+		.optional()
+		.openapi({
+			param: { name: "format", in: "query" },
+			example: "markdown",
+			description: "Export format; defaults to JSON.",
+		}),
+});
+
+/* Machine-readable export of a quiz (including answers and explanations) for
    AI/RAG integrations. Authorization mirrors the detail route: public quizzes
    are open, private ones only for their owner. */
-export function registerExportQuiz(app: App) {
-	app.get("/api/quizzes/:id/export", async (c) => {
-		const viewer = currentUser(c);
-		const quiz = await container(c).services.quiz.getForViewer(
-			c.req.param("id"),
-			viewer?.id ?? null,
-		);
+export const exportQuizRoute = createRoute({
+	method: "get",
+	path: "/api/quizzes/{id}/export",
+	tags: ["Quizzes"],
+	summary: "Export quiz for AI/RAG integrations",
+	request: {
+		params: IdParamsSchema,
+		query: ExportQuerySchema,
+	},
+	responses: {
+		200: {
+			description: "The quiz as JSON or Markdown (one section per question).",
+			content: {
+				"application/json": { schema: quizDetailResponseSchema },
+				"text/markdown": { schema: z.string() },
+			},
+		},
+		404: errorResponse("Quiz not found or not visible to the viewer."),
+	},
+});
 
-		if (c.req.query("format") === "markdown") {
-			return c.text(quizToMarkdown(quiz), 200, {
-				"Content-Type": "text/markdown; charset=utf-8",
-			});
-		}
+export const exportQuizHandler: RouteHandler<typeof exportQuizRoute, HonoEnv> = async (c) => {
+	const { id } = c.req.valid("param");
+	const viewer = currentUser(c);
+	const quiz = await container(c).services.quiz.getForViewer(id, viewer?.id ?? null);
 
-		return c.json({ quiz });
-	});
-}
+	if (c.req.valid("query").format === "markdown") {
+		return c.text(quizToMarkdown(quiz), 200, {
+			"Content-Type": "text/markdown; charset=utf-8",
+		});
+	}
+
+	return c.json({ quiz }, 200);
+};

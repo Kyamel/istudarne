@@ -13,6 +13,45 @@
 	"observability": {
 		"enabled": true
 	},
+	/* Non-secret configuration. Secrets (JWT_SECRET, RESEND_API_KEY,
+	   OPENAI_API_KEY) are set with `wrangler secret put` and, locally, in
+	   `.dev.vars` (see .dev.vars.example). */
+	"vars": {
+		"EMAIL_FROM": "Istudarne <no-reply@istudarne.com>",
+		"ALLOWED_ORIGINS": "capacitor://localhost",
+		"OPENAI_MODEL": "gpt-4o-mini"
+	},
+	/* Cloudflare rate-limiting bindings (per-colo counters, keyed in code by
+	   client IP + path). namespace_id is an arbitrary unique number per limiter. */
+	"ratelimits": [
+		{
+			"name": "AUTH_RATE_LIMITER",
+			"namespace_id": "1001",
+			"simple": { "limit": 10, "period": 60 }
+		},
+		{
+			"name": "AI_RATE_LIMITER",
+			"namespace_id": "1002",
+			"simple": { "limit": 5, "period": 60 }
+		}
+	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "AI_QUEUE",
+				"queue": "istudarne-ai-jobs"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "istudarne-ai-jobs",
+				"max_batch_size": 5,
+				"max_batch_timeout": 5,
+				// Keep in sync with MAX_ATTEMPTS in worker/queue/aiJobs.ts.
+				"max_retries": 3
+			}
+		]
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",

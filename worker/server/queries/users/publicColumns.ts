@@ -8,4 +8,5 @@ export const publicUserColumns = {
 	displayName: users.displayName,
 	bio: users.bio,
 	avatarUrl: users.avatarUrl,
+	emailVerifiedAt: users.emailVerifiedAt,
 };

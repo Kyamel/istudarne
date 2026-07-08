@@ -39,10 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setUser(data.user);
 	}, []);
 
+	/* Registration no longer signs the user in: the account must verify its
+	   email first, so the user stays on the login screen. */
 	const register = useCallback(
 		async (input: { email: string; username: string; displayName: string; password: string }) => {
-			const data = await api.register(input);
-			setUser(data.user);
+			await api.register(input);
 		},
 		[],
 	);

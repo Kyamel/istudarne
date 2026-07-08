@@ -1,18 +1,12 @@
-import { createContainer } from "@server/container";
+import { createContainer } from "@api/server/container";
 import type { MiddlewareHandler } from "hono";
-import type { HonoEnv } from "../env";
-import { getSessionToken } from "../http/cookies";
+import type { HonoEnv } from "@api/env";
 
 /**
- * Opens the database connection and builds the DI container once per request,
- * then resolves the authenticated user from the session cookie.
+ * Opens the database connection and builds the DI container once per request.
+ * User resolution lives in the auth middleware.
  */
 export const diMiddleware: MiddlewareHandler<HonoEnv> = async (c, next) => {
-	const container = createContainer(c.env);
-	c.set("container", container);
-
-	const token = getSessionToken(c);
-	c.set("user", token ? await container.services.auth.authenticate(token) : null);
-
+	c.set("container", createContainer(c.env));
 	await next();
 };

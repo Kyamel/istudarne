@@ -1,20 +1,114 @@
+import { StudyGroupChat } from "@api/server/study-group-chat";
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { StudyGroupChat } from "@server/study-group-chat";
+import type { Context, MiddlewareHandler } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
+import { csrf } from "hono/csrf";
+import { etag } from "hono/etag";
+import { logger } from "hono/logger";
+import { prettyJSON } from "hono/pretty-json";
+import { requestId } from "hono/request-id";
+import { secureHeaders } from "hono/secure-headers";
 import type { HonoEnv } from "./env";
 import { detectLocale, renderLandingPage, renderNotFoundPage, renderSharePage } from "./html";
+import { ACCESS_COOKIE_NAME } from "./http/cookies";
 import { handleError } from "./http/errorHandler";
+import { authMiddleware } from "./middleware/auth";
 import { diMiddleware } from "./middleware/di";
+import { rateLimitBy } from "./middleware/rateLimit";
 import { openApiDocument } from "./openapi";
+import { handleAiJobsBatch } from "./queue/aiJobs";
 import { registerApiRoutes } from "./routes";
 
-const app = new OpenAPIHono<HonoEnv>();
+const app = new OpenAPIHono<HonoEnv>({
+	/* Turns zod validation failures into the same `{ error }` JSON shape used
+	   by AppError, instead of zod-openapi's default error payload. */
+	defaultHook: (result, c) => {
+		if (!result.success) {
+			return c.json({ error: result.error.issues[0]?.message ?? "Invalid data." }, 400);
+		}
+	},
+});
 
 app.onError(handleError);
 
-app.use("/api/*", cors({ origin: (origin) => origin, credentials: true }));
+/* --------------------------- API middleware stack -------------------------- */
+
+/** Origins allowed for credentialed cross-origin requests (web is same-origin;
+ * add native shells like `capacitor://localhost` via the ALLOWED_ORIGINS var). */
+function isAllowedOrigin(origin: string, c: Context<HonoEnv>): boolean {
+	if (origin === new URL(c.req.url).origin) return true;
+	const allowed = (c.env.ALLOWED_ORIGINS ?? "")
+		.split(",")
+		.map((entry) => entry.trim())
+		.filter(Boolean);
+	return allowed.includes(origin);
+}
+
+/* WebSocket upgrade responses have immutable headers; middleware that mutates
+   or hashes the response body must not touch them. */
+const unlessWebSocket =
+	(middleware: MiddlewareHandler<HonoEnv>): MiddlewareHandler<HonoEnv> =>
+	(c, next) =>
+		c.req.header("upgrade")?.toLowerCase() === "websocket" ? next() : middleware(c, next);
+
+app.use("/api/*", requestId());
+app.use("/api/*", logger());
+app.use(
+	"/api/*",
+	cors({
+		origin: (origin, c) => (isAllowedOrigin(origin, c as Context<HonoEnv>) ? origin : null),
+		credentials: true,
+	}),
+);
+/* Blocks cross-origin form submissions that ride on the auth cookies. Bearer
+   requests are exempt: an Authorization header cannot be attached by a
+   cross-site form, so there is nothing to forge. */
+const csrfProtection = csrf({ origin: isAllowedOrigin });
+app.use("/api/*", (c, next) => (c.req.header("Authorization") ? next() : csrfProtection(c, next)));
+app.use("/api/*", unlessWebSocket(secureHeaders()));
+app.use("/api/*", unlessWebSocket(etag()));
+app.use("/api/*", prettyJSON());
+app.use(
+	"/api/*",
+	bodyLimit({
+		maxSize: 5 * 1024 * 1024,
+		onError: (c) => c.json({ error: "Request body too large." }, 413),
+	}),
+);
+/* Brute-force/abuse protection on the sensitive endpoints. Registered after
+   cors so CORS preflights are answered before consuming quota. The auth
+   limiter throttles credential guessing and email spam; the AI limiter caps
+   spend on the paid OpenAI-backed queue. */
+const authRateLimit = rateLimitBy((env) => env.AUTH_RATE_LIMITER);
+app.use("/api/auth/login", authRateLimit);
+app.use("/api/auth/register", authRateLimit);
+app.use("/api/auth/refresh", authRateLimit);
+app.use("/api/auth/verify-email", authRateLimit);
+app.use("/api/auth/resend-verification", authRateLimit);
+app.use(
+	"/api/ai/jobs",
+	rateLimitBy((env) => env.AI_RATE_LIMITER),
+);
+
 app.use("/api/*", diMiddleware);
+app.use("/api/*", authMiddleware);
+
+/* ------------------------------ documentation ------------------------------ */
+
+app.openAPIRegistry.registerComponent("securitySchemes", "BearerAuth", {
+	type: "http",
+	scheme: "bearer",
+	bearerFormat: "JWT",
+	description: "Access token issued by /api/auth/login or /api/auth/refresh (native apps).",
+});
+app.openAPIRegistry.registerComponent("securitySchemes", "CookieAuth", {
+	type: "apiKey",
+	in: "cookie",
+	name: ACCESS_COOKIE_NAME,
+	description: "httpOnly access-token cookie set for the web app.",
+});
 
 app.get("/docs", swaggerUI({ url: "/openapi.json" }));
 app.get("/docs/", swaggerUI({ url: "/openapi.json" }));
@@ -54,6 +148,8 @@ available anonymously.
 		{ "Content-Type": "text/plain; charset=utf-8" },
 	);
 });
+
+/* --------------------------------- pages ---------------------------------- */
 
 app.get("/", (c) =>
 	c.html(
@@ -125,4 +221,10 @@ app.notFound((c) => {
 });
 
 export { StudyGroupChat };
-export default app;
+
+/* The Worker exports both the HTTP entry point (Hono) and the queue consumer
+   that processes async AI jobs. */
+export default {
+	fetch: app.fetch,
+	queue: handleAiJobsBatch,
+};

@@ -1,10 +1,23 @@
-import type { App } from "../../env";
-import { container, requireUser } from "../../http/context";
+import { createRoute, type RouteHandler } from "@hono/zod-openapi";
+import { statsResponseSchema } from "@shared/contracts";
+import type { HonoEnv } from "@api/env";
+import { container, requireUser } from "@api/http/context";
+import { authSecurity, errorResponse, jsonResponse } from "@api/openapi";
 
-export function registerMyStats(app: App) {
-	app.get("/api/me/stats", async (c) => {
-		const user = requireUser(c);
-		const stats = await container(c).repositories.stats.forUser(user.id);
-		return c.json({ stats });
-	});
-}
+export const myStatsRoute = createRoute({
+	method: "get",
+	path: "/api/me/stats",
+	tags: ["Me"],
+	summary: "My study stats",
+	security: authSecurity,
+	responses: {
+		200: jsonResponse(statsResponseSchema, "Aggregated stats for the authenticated user."),
+		401: errorResponse("Unauthenticated."),
+	},
+});
+
+export const myStatsHandler: RouteHandler<typeof myStatsRoute, HonoEnv> = async (c) => {
+	const user = requireUser(c);
+	const stats = await container(c).repositories.stats.forUser(user.id);
+	return c.json({ stats }, 200);
+};

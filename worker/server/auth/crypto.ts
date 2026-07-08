@@ -55,7 +55,8 @@ export async function sha256Hex(value: string) {
 	return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export function generateSessionToken() {
+/** URL-safe random opaque token (refresh tokens, email verification, etc.). */
+export function generateToken() {
 	return toBase64(crypto.getRandomValues(new Uint8Array(32)))
 		.replace(/[+/=]/g, "")
 		.slice(0, 43);
