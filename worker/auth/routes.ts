@@ -15,6 +15,8 @@ import {
 	authUserResponseSchema,
 	loginRequestSchema,
 	okResponseSchema,
+	passwordResetConfirmSchema,
+	passwordResetRequestSchema,
 	refreshRequestSchema,
 	refreshResponseSchema,
 	registerRequestSchema,
@@ -51,6 +53,13 @@ const authSecurity: Record<string, string[]>[] = [{ BearerAuth: [] }, { CookieAu
 
 export function verificationUrl(origin: string, token: string) {
 	return `${origin}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+}
+
+/* The reset link opens a client page where the user types a new password, which
+   then POSTs to /api/auth/password-reset/confirm. Change the path if the web app
+   handles resets somewhere other than /reset-password. */
+export function passwordResetUrl(origin: string, token: string) {
+	return `${origin}/reset-password?token=${encodeURIComponent(token)}`;
 }
 
 /* Minimal standalone page for the link opened from the email client. */
@@ -204,6 +213,37 @@ export const resendVerificationRoute = createRoute({
 	},
 });
 
+export const passwordResetRequestRoute = createRoute({
+	method: "post",
+	path: "/api/auth/password-reset",
+	tags: ["Auth"],
+	summary: "Request a password-reset email",
+	description:
+		"Always responds ok. The email is only actually sent when the address belongs to an " +
+		"account and no reset email was sent within the cooldown, so it never reveals whether an " +
+		"account exists.",
+	request: { body: jsonBody(passwordResetRequestSchema) },
+	responses: {
+		200: jsonResponse(okResponseSchema, "Reset email queued (when applicable)."),
+		400: errorResponse("Invalid payload."),
+	},
+});
+
+export const passwordResetConfirmRoute = createRoute({
+	method: "post",
+	path: "/api/auth/password-reset/confirm",
+	tags: ["Auth"],
+	summary: "Set a new password from a reset token",
+	description:
+		"Consumes the single-use token from the reset link, sets the new password, and revokes " +
+		"every session of the account so a leaked token cannot keep a stolen session alive.",
+	request: { body: jsonBody(passwordResetConfirmSchema) },
+	responses: {
+		200: jsonResponse(okResponseSchema, "Password changed; sign in with the new password."),
+		400: errorResponse("Invalid or expired reset token."),
+	},
+});
+
 /* -------------------------------- handlers --------------------------------- */
 
 export type AuthApiDeps<E extends Env & WithAuthUser> = {
@@ -298,6 +338,28 @@ export function createAuthApi<E extends Env & WithAuthUser>(deps: AuthApiDeps<E>
 		return c.json({ ok: true as const }, 200);
 	};
 
+	const passwordResetRequestHandler: RouteHandler<typeof passwordResetRequestRoute, E> = async (
+		c,
+	) => {
+		const { email } = c.req.valid("json");
+
+		const pending = await deps.auth(c).requestPasswordReset(email);
+		if (pending) {
+			const url = passwordResetUrl(new URL(c.req.url).origin, pending.token);
+			c.executionCtx.waitUntil(deps.email(c).sendPasswordResetEmail(pending.user.email, url));
+		}
+
+		return c.json({ ok: true as const }, 200);
+	};
+
+	const passwordResetConfirmHandler: RouteHandler<typeof passwordResetConfirmRoute, E> = async (
+		c,
+	) => {
+		const { token, password } = c.req.valid("json");
+		await deps.auth(c).confirmPasswordReset(token, password);
+		return c.json({ ok: true as const }, 200);
+	};
+
 	return {
 		registerRoute,
 		registerHandler,
@@ -315,5 +377,9 @@ export function createAuthApi<E extends Env & WithAuthUser>(deps: AuthApiDeps<E>
 		verifyEmailHandler,
 		resendVerificationRoute,
 		resendVerificationHandler,
+		passwordResetRequestRoute,
+		passwordResetRequestHandler,
+		passwordResetConfirmRoute,
+		passwordResetConfirmHandler,
 	};
 }

@@ -32,6 +32,8 @@ export type RefreshTokenRecord = {
 	userId: string;
 	expiresAt: Date;
 	revokedAt: Date | null;
+	/** Set when this token was rotated, pointing at its successor. */
+	replacedById: string | null;
 };
 
 export type CreateRefreshTokenInput = {
@@ -41,19 +43,26 @@ export type CreateRefreshTokenInput = {
 	expiresAt: Date;
 };
 
-export type EmailVerificationRecord = {
+/** Shared shape for the single-use email-verification and password-reset tokens. */
+export type SingleUseTokenRecord = {
 	id: string;
 	userId: string;
 	expiresAt: Date;
 	usedAt: Date | null;
 };
 
-export type CreateEmailVerificationTokenInput = {
+export type EmailVerificationRecord = SingleUseTokenRecord;
+export type PasswordResetRecord = SingleUseTokenRecord;
+
+export type CreateSingleUseTokenInput = {
 	id: string;
 	userId: string;
 	tokenHash: string;
 	expiresAt: Date;
 };
+
+export type CreateEmailVerificationTokenInput = CreateSingleUseTokenInput;
+export type CreatePasswordResetTokenInput = CreateSingleUseTokenInput;
 
 export interface AuthStore {
 	getByEmail(email: string): Promise<CredentialsRecord | null>;
@@ -63,6 +72,8 @@ export interface AuthStore {
 
 	createRefreshToken(input: CreateRefreshTokenInput): Promise<void>;
 	getRefreshTokenByHash(tokenHash: string): Promise<RefreshTokenRecord | null>;
+	/** Follows a rotation chain (`replacedById`) during the reuse-leeway window. */
+	getRefreshTokenById(id: string): Promise<RefreshTokenRecord | null>;
 	revokeRefreshToken(id: string, replacedById?: string | null): Promise<void>;
 	revokeAllRefreshTokens(userId: string): Promise<void>;
 
@@ -71,4 +82,14 @@ export interface AuthStore {
 	markEmailVerificationTokenUsed(id: string): Promise<void>;
 	markEmailVerified(userId: string): Promise<void>;
 	getLatestEmailVerificationTokenTime(userId: string): Promise<Date | null>;
+
+	createPasswordResetToken(input: CreatePasswordResetTokenInput): Promise<void>;
+	getPasswordResetTokenByHash(tokenHash: string): Promise<PasswordResetRecord | null>;
+	getLatestPasswordResetTokenTime(userId: string): Promise<Date | null>;
+	/** Consume the token, set the new password, and drop every session, atomically. */
+	completePasswordReset(input: {
+		tokenId: string;
+		userId: string;
+		passwordHash: string;
+	}): Promise<void>;
 }

@@ -3,25 +3,29 @@
  * (so any Hono app maps errors without custom classes); persistence goes
  * through the AuthStore interface.
  *
- * Model: 15-min HS256 JWT access tokens (stateless) + opaque refresh tokens
- * (SHA-256-hashed at rest, rotated on every refresh, reuse revokes all of the
- * user's sessions) + single-use email-verification tokens with a resend
- * cooldown. Email verification is required before the first login.
+ * Model: HS256 JWT access tokens (stateless) + opaque refresh tokens (SHA-256
+ * hashed at rest, rotated on every refresh) + single-use email-verification and
+ * password-reset tokens with a resend cooldown. Rotating a refresh token records
+ * its successor, so a replay is recognised: outside the leeway window it is
+ * treated as theft and revokes every session; inside it, it is just a racing
+ * parallel request (see policy.ts). Email verification is required before login
+ * by default, but a host can relax that to "optional" through the policy.
  */
 import { HTTPException } from "hono/http-exception";
 import type { AuthTokens, AuthUser, RegisterRequest } from "./contracts";
 import { generateToken, hashPassword, sha256Hex, verifyPassword } from "./crypto";
-import { ACCESS_TOKEN_TTL_SECONDS, signAccessToken, verifyAccessToken } from "./jwt";
-import type { AuthStore, CredentialsRecord } from "./store";
+import { signAccessToken, verifyAccessToken } from "./jwt";
+import { type AuthPolicy, DEFAULT_AUTH_POLICY } from "./policy";
+import type { AuthStore, CredentialsRecord, RefreshTokenRecord } from "./store";
 
-const REFRESH_TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
-const EMAIL_VERIFICATION_TTL_MS = 1000 * 60 * 60 * 24 * 2; // 2 days
-/* Server-side floor for resending verification emails; the client mirrors it
-   with a countdown, but the server is the actual enforcement. */
-const RESEND_COOLDOWN_MS = 1000 * 60;
+/* Kept for the cookie transport, which needs the maxAge of the default policy. */
+export const ACCESS_TOKEN_TTL_SECONDS = DEFAULT_AUTH_POLICY.accessTokenTtlSeconds;
+export const REFRESH_TOKEN_TTL_SECONDS = DEFAULT_AUTH_POLICY.refreshTokenTtlSeconds;
 
-export const REFRESH_TOKEN_TTL_SECONDS = Math.floor(REFRESH_TOKEN_TTL_MS / 1000);
-export { ACCESS_TOKEN_TTL_SECONDS };
+const seconds = (n: number) => n * 1000;
+
+/** Guard against a cycle or an absurd chain of racing replays. */
+const MAX_ROTATION_CHAIN = 10;
 
 function toAuthUser(row: CredentialsRecord): AuthUser {
 	return {
@@ -35,38 +39,88 @@ function toAuthUser(row: CredentialsRecord): AuthUser {
 	};
 }
 
-export function createAuthService(users: AuthStore, jwtSecret: string) {
-	async function issueTokens(userId: string): Promise<AuthTokens> {
+export function createAuthService(
+	users: AuthStore,
+	jwtSecret: string,
+	policy: AuthPolicy = DEFAULT_AUTH_POLICY,
+) {
+	async function issueTokens(
+		userId: string,
+	): Promise<{ tokens: AuthTokens; refreshTokenId: string }> {
+		const refreshTokenId = crypto.randomUUID();
 		const refreshToken = generateToken();
 		await users.createRefreshToken({
-			id: crypto.randomUUID(),
+			id: refreshTokenId,
 			userId,
 			tokenHash: await sha256Hex(refreshToken),
-			expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+			expiresAt: new Date(Date.now() + seconds(policy.refreshTokenTtlSeconds)),
 		});
 		return {
-			accessToken: await signAccessToken(jwtSecret, userId),
-			refreshToken,
-			expiresIn: ACCESS_TOKEN_TTL_SECONDS,
-			tokenType: "Bearer",
+			refreshTokenId,
+			tokens: {
+				accessToken: await signAccessToken(jwtSecret, userId, policy.accessTokenTtlSeconds),
+				refreshToken,
+				expiresIn: policy.accessTokenTtlSeconds,
+				tokenType: "Bearer",
+			},
 		};
 	}
 
-	async function issueEmailVerificationToken(userId: string): Promise<string> {
+	async function issueSingleUseToken(
+		userId: string,
+		kind: "email-verification" | "password-reset",
+	): Promise<string> {
 		const token = generateToken();
-		await users.createEmailVerificationToken({
+		const input = {
 			id: crypto.randomUUID(),
 			userId,
 			tokenHash: await sha256Hex(token),
-			expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS),
-		});
+			expiresAt: new Date(
+				Date.now() +
+					seconds(
+						kind === "email-verification"
+							? policy.emailVerificationTtlSeconds
+							: policy.passwordResetTtlSeconds,
+					),
+			),
+		};
+
+		if (kind === "email-verification") await users.createEmailVerificationToken(input);
+		else await users.createPasswordResetToken(input);
+
 		return token;
+	}
+
+	/**
+	 * A rotated token replayed within the leeway window is a parallel request,
+	 * not theft. `replacedById` separates the two cases: rotation records a
+	 * successor, while logout and explicit revocation do not — so the leeway can
+	 * never keep a deliberately revoked session alive.
+	 */
+	function isRacingReplay(row: RefreshTokenRecord): boolean {
+		if (!row.revokedAt || row.replacedById === null) return false;
+		const age = Date.now() - row.revokedAt.getTime();
+		return age >= 0 && age <= seconds(policy.refreshReuseLeewaySeconds);
+	}
+
+	/** Follows `replacedById` to the one token in the chain still alive. */
+	async function followChain(from: RefreshTokenRecord): Promise<RefreshTokenRecord | null> {
+		let current: RefreshTokenRecord | null = from;
+
+		for (let hop = 0; hop < MAX_ROTATION_CHAIN && current; hop++) {
+			if (!current.revokedAt) return current;
+			if (current.replacedById === null) return null;
+			current = await users.getRefreshTokenById(current.replacedById);
+		}
+
+		return null;
 	}
 
 	return {
 		/**
-		 * Creates the account but does NOT sign the user in: email verification
-		 * is required before the first login, so no tokens are issued here.
+		 * Creates the account. No session is issued here: even when email
+		 * verification is optional, the client signs in with POST /login
+		 * afterwards, so registration keeps a single, simple contract.
 		 */
 		async register(input: RegisterRequest): Promise<{
 			user: AuthUser;
@@ -97,7 +151,7 @@ export function createAuthService(users: AuthStore, jwtSecret: string) {
 					avatarUrl: null,
 					emailVerified: false,
 				},
-				verificationToken: await issueEmailVerificationToken(id),
+				verificationToken: await issueSingleUseToken(id, "email-verification"),
 			};
 		},
 
@@ -106,28 +160,46 @@ export function createAuthService(users: AuthStore, jwtSecret: string) {
 			if (!user || !(await verifyPassword(password, user.passwordHash))) {
 				throw new HTTPException(401, { message: "Incorrect email or password." });
 			}
-			if (user.emailVerifiedAt === null) {
+			if (policy.emailVerification === "required-for-login" && user.emailVerifiedAt === null) {
 				throw new HTTPException(403, {
 					message:
 						"Please verify your email before signing in. Check your inbox for the verification link.",
 				});
 			}
-			return { user: toAuthUser(user), tokens: await issueTokens(user.id) };
+			const { tokens } = await issueTokens(user.id);
+			return { user: toAuthUser(user), tokens };
 		},
 
 		/**
-		 * Rotates the refresh token: the presented token is revoked and a new
-		 * pair is issued. Presenting an already-revoked token means it leaked
-		 * (or the client was cloned), so every session of that user is revoked.
+		 * Rotates the refresh token. The presented one is revoked and points at
+		 * its successor, so a later replay can be recognised. A replay inside the
+		 * leeway window is a racing request: walk to the live end of the chain and
+		 * rotate that, so one device keeps one session; outside it, the token
+		 * leaked and every session is revoked.
 		 */
 		async refresh(refreshToken: string): Promise<{ user: AuthUser; tokens: AuthTokens }> {
-			const row = await users.getRefreshTokenByHash(await sha256Hex(refreshToken));
-			if (!row) throw new HTTPException(401, { message: "Invalid session. Please sign in again." });
+			const presented = await users.getRefreshTokenByHash(await sha256Hex(refreshToken));
+			if (!presented)
+				throw new HTTPException(401, { message: "Invalid session. Please sign in again." });
 
-			if (row.revokedAt) {
-				await users.revokeAllRefreshTokens(row.userId);
-				throw new HTTPException(401, { message: "Session revoked. Please sign in again." });
+			let row = presented;
+
+			if (presented.revokedAt) {
+				if (presented.replacedById === null) {
+					// Signed out or explicitly revoked. Deliberate — just refuse.
+					throw new HTTPException(401, { message: "Session revoked. Please sign in again." });
+				}
+				if (!isRacingReplay(presented)) {
+					await users.revokeAllRefreshTokens(presented.userId);
+					throw new HTTPException(401, { message: "Session revoked. Please sign in again." });
+				}
+
+				const live = await followChain(presented);
+				if (!live)
+					throw new HTTPException(401, { message: "Session revoked. Please sign in again." });
+				row = live;
 			}
+
 			if (row.expiresAt.getTime() <= Date.now()) {
 				throw new HTTPException(401, { message: "Session expired. Please sign in again." });
 			}
@@ -136,8 +208,8 @@ export function createAuthService(users: AuthStore, jwtSecret: string) {
 			if (!user)
 				throw new HTTPException(401, { message: "Invalid session. Please sign in again." });
 
-			const tokens = await issueTokens(row.userId);
-			await users.revokeRefreshToken(row.id, await sha256Hex(tokens.refreshToken));
+			const { tokens, refreshTokenId } = await issueTokens(row.userId);
+			await users.revokeRefreshToken(row.id, refreshTokenId);
 			return { user, tokens };
 		},
 
@@ -163,9 +235,9 @@ export function createAuthService(users: AuthStore, jwtSecret: string) {
 
 		/**
 		 * Issues a fresh verification token for an unverified account. Returns
-		 * null when the email is unknown, already verified, or a token was
-		 * issued less than a minute ago (resend cooldown) — the route answers
-		 * identically in every case, so nothing leaks about the account.
+		 * null when the email is unknown, already verified, or a token was issued
+		 * within the cooldown — the route answers identically in every case, so
+		 * nothing leaks about the account.
 		 */
 		async requestEmailVerification(
 			email: string,
@@ -174,11 +246,53 @@ export function createAuthService(users: AuthStore, jwtSecret: string) {
 			if (!user || user.emailVerifiedAt !== null) return null;
 
 			const lastIssuedAt = await users.getLatestEmailVerificationTokenTime(user.id);
-			if (lastIssuedAt && Date.now() - lastIssuedAt.getTime() < RESEND_COOLDOWN_MS) {
+			if (
+				lastIssuedAt &&
+				Date.now() - lastIssuedAt.getTime() < seconds(policy.resendCooldownSeconds)
+			) {
 				return null;
 			}
 
-			return { user: toAuthUser(user), token: await issueEmailVerificationToken(user.id) };
+			return {
+				user: toAuthUser(user),
+				token: await issueSingleUseToken(user.id, "email-verification"),
+			};
+		},
+
+		/**
+		 * Issues a password-reset token. Returns null when the email is unknown or
+		 * a token was issued within the cooldown; the route answers identically
+		 * either way, so it never reveals whether an account exists.
+		 */
+		async requestPasswordReset(email: string): Promise<{ user: AuthUser; token: string } | null> {
+			const user = await users.getByEmail(email);
+			if (!user) return null;
+
+			const lastIssuedAt = await users.getLatestPasswordResetTokenTime(user.id);
+			if (
+				lastIssuedAt &&
+				Date.now() - lastIssuedAt.getTime() < seconds(policy.resendCooldownSeconds)
+			) {
+				return null;
+			}
+
+			return {
+				user: toAuthUser(user),
+				token: await issueSingleUseToken(user.id, "password-reset"),
+			};
+		},
+
+		/** Consumes the token, sets the new password, and signs every device out. */
+		async confirmPasswordReset(token: string, password: string): Promise<void> {
+			const row = await users.getPasswordResetTokenByHash(await sha256Hex(token));
+			if (!row || row.usedAt || row.expiresAt.getTime() <= Date.now()) {
+				throw new HTTPException(400, { message: "Invalid or expired reset link." });
+			}
+			await users.completePasswordReset({
+				tokenId: row.id,
+				userId: row.userId,
+				passwordHash: await hashPassword(password),
+			});
 		},
 	};
 }

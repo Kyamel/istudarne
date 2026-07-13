@@ -81,6 +81,17 @@ export const resendVerificationRequestSchema = z.object({
 	email: z.email(),
 });
 
+/** Unauthenticated: someone who forgot their password cannot be signed in. */
+export const passwordResetRequestSchema = z.object({
+	email: z.email(),
+});
+
+/** Token comes from the reset link; the password mirrors the register rules. */
+export const passwordResetConfirmSchema = z.object({
+	token: z.string().min(1),
+	password: z.string().min(8).max(128),
+});
+
 export const okResponseSchema = z.object({
 	ok: z.literal(true),
 });

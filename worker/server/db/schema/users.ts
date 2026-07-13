@@ -59,6 +59,26 @@ export const emailVerificationTokens = sqliteTable(
 	(table) => [index("email_verification_tokens_user_idx").on(table.userId)],
 );
 
+/**
+ * Single-use password-reset tokens (stored hashed). Consuming one sets the new
+ * password and revokes every refresh token, so a leaked reset link cannot keep
+ * a stolen session alive.
+ */
+export const passwordResetTokens = sqliteTable(
+	"password_reset_tokens",
+	{
+		id: text("id").primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		tokenHash: text("token_hash").notNull().unique(),
+		expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+		usedAt: integer("used_at", { mode: "timestamp" }),
+		createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+	},
+	(table) => [index("password_reset_tokens_user_idx").on(table.userId)],
+);
+
 export const follows = sqliteTable(
 	"follows",
 	{

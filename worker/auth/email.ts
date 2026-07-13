@@ -49,6 +49,22 @@ export function createEmailService(config: EmailConfig) {
 				 <p>The link expires in 48 hours. If you did not create this account, ignore this message.</p>`,
 			);
 		},
+
+		sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
+			if (!config.apiKey) {
+				// Dev convenience: the link is required to complete the flow locally.
+				console.log(JSON.stringify({ event: "email.password_reset_link", to, resetUrl }));
+				return Promise.resolve();
+			}
+			return send(
+				to,
+				"Reset your password",
+				`<p>We received a request to reset your password.</p>
+				 <p>Choose a new password by clicking the link below:</p>
+				 <p><a href="${resetUrl}">Reset my password</a></p>
+				 <p>The link expires soon and can be used once. If you did not request this, ignore this message and your password stays unchanged.</p>`,
+			);
+		},
 	};
 }
 

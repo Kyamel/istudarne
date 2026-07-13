@@ -4,9 +4,13 @@ import { sign, verify } from "hono/jwt";
 /** Short-lived so a leaked access token has a small blast radius. */
 export const ACCESS_TOKEN_TTL_SECONDS = 60 * 15;
 
-export async function signAccessToken(secret: string, userId: string): Promise<string> {
+export async function signAccessToken(
+	secret: string,
+	userId: string,
+	ttlSeconds: number = ACCESS_TOKEN_TTL_SECONDS,
+): Promise<string> {
 	const now = Math.floor(Date.now() / 1000);
-	return sign({ sub: userId, iat: now, exp: now + ACCESS_TOKEN_TTL_SECONDS }, secret);
+	return sign({ sub: userId, iat: now, exp: now + ttlSeconds }, secret);
 }
 
 /** Returns the user id from a valid, unexpired access token, or null. */

@@ -22,6 +22,12 @@ export async function getRefreshTokenByHash(db: Database, tokenHash: string) {
 	return row ?? null;
 }
 
+/** Looks a token up by id — used to walk a rotation chain during reuse leeway. */
+export async function getRefreshTokenById(db: Database, id: string) {
+	const [row] = await db.select().from(refreshTokens).where(eq(refreshTokens.id, id)).limit(1);
+	return row ?? null;
+}
+
 export async function revokeRefreshToken(db: Database, id: string, replacedById: string | null) {
 	await db
 		.update(refreshTokens)

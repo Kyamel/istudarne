@@ -64,6 +64,8 @@ export function registerApiRoutes(app: App) {
 			.openapi(authApi.verifyEmailLinkRoute, authApi.verifyEmailLinkHandler)
 			.openapi(authApi.verifyEmailRoute, authApi.verifyEmailHandler)
 			.openapi(authApi.resendVerificationRoute, authApi.resendVerificationHandler)
+			.openapi(authApi.passwordResetRequestRoute, authApi.passwordResetRequestHandler)
+			.openapi(authApi.passwordResetConfirmRoute, authApi.passwordResetConfirmHandler)
 
 			// Specific routes must be registered before parametric routes to avoid route collisions.
 			.openapi(searchQuizzesRoute, searchQuizzesHandler)
