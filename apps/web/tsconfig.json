@@ -8,7 +8,7 @@
 		"jsx": "react-jsx",
 		"rootDirs": [".", "./.react-router/types"],
 		"paths": {
-			"~/*": ["./app/*"]
+			"~/*": ["./src/*"]
 		},
 		"esModuleInterop": true,
 		"verbatimModuleSyntax": true,
@@ -20,7 +20,7 @@
 		"noEmit": true
 	},
 	"include": [
-		"app/**/*",
+		"src/**/*",
 		"workers/**/*",
 		"vite.config.ts",
 		"worker-configuration.d.ts",

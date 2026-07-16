@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "istudarne-api",
-	"main": "./worker/index.ts",
+	"main": "./src/index.ts",
 	"compatibility_date": "2026-06-16",
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": {
@@ -45,7 +45,7 @@
 				"queue": "istudarne-ai-jobs",
 				"max_batch_size": 5,
 				"max_batch_timeout": 5,
-				// Keep in sync with MAX_ATTEMPTS in worker/queue/aiJobs.ts.
+				// Keep in sync with MAX_ATTEMPTS in src/queue/aiJobs.ts.
 				"max_retries": 3
 			}
 		]

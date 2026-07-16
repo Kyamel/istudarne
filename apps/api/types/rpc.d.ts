@@ -9,4 +9,4 @@
 declare global {
 	interface Env {}
 }
-export type { ApiRoutes } from "../dist/types/worker/routes/index";
+export type { ApiRoutes } from "../dist/types/src/routes/index";

@@ -12,7 +12,7 @@ import { createQuizService } from "./services/quizService";
  * Dependency injection container built once per request. The Drizzle connection
  * is opened here and shared by all repositories and services, so handlers do
  * not recreate the connection. Authentication is handled by the Better Auth
- * instance (worker/auth.ts), not through this container.
+ * instance (src/auth.ts), not through this container.
  */
 export function createContainer(env: Env) {
 	const db = createDatabase(env.DATABASE_URL);

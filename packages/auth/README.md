@@ -72,7 +72,7 @@ export const auth = createAuth({
 ```
 
 Mount it and resolve the session in the host (Hono example — see
-`apps/api/worker/index.ts`):
+`apps/api/src/index.ts`):
 
 ```ts
 app.all('/api/auth/*', (c) => auth.handler(c.req.raw));

@@ -5,7 +5,7 @@ import { getUserByUsername } from "../queries/users/getUserByUsername";
 
 /**
  * Domain profile reads. Identity and credentials are owned by Better Auth
- * (worker/auth.ts) — this repository only exposes the app-facing `users` rows.
+ * (src/auth.ts) — this repository only exposes the app-facing `users` rows.
  */
 export function createUserRepository(db: Database) {
 	return {

@@ -42,7 +42,7 @@ import { profileHandler, profileRoute } from "./users/profile";
  *
  * The calls are chained so the accumulated type describes the whole API: the
  * exported `ApiRoutes` type powers the type-safe RPC client (`hc<ApiRoutes>`)
- * used by the web app — see `app/lib/rpc.ts`.
+ * used by the web app — see `src/lib/rpc.ts`.
  */
 export function registerApiRoutes(app: App) {
 	return (

@@ -4,10 +4,10 @@
 	"private": true,
 	"type": "module",
 	"exports": {
-		".": "./worker/index.ts",
+		".": "./src/index.ts",
 		"./routes": {
 			"types": "./types/rpc.d.ts",
-			"default": "./worker/routes/index.ts"
+			"default": "./src/routes/index.ts"
 		}
 	},
 	"scripts": {

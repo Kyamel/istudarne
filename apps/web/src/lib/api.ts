@@ -74,8 +74,8 @@ async function unwrap<
 	}
 }
 
-/* Auth endpoints live in the self-contained client module (app/auth/client.ts),
-   consumed through the AuthProvider in app/auth/context.tsx. */
+/* Auth endpoints live in the self-contained client module (src/auth/client.ts),
+   consumed through the AuthProvider in src/auth/context.tsx. */
 
 /* --------------------------------- quizzes -------------------------------- */
 
