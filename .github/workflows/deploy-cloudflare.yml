@@ -4,21 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - "app/**"
-      - "worker/**"
-      - "shared/**"
-      - "messages/**"
+      - "apps/**"
+      - "packages/**"
       - "project.inlang/**"
-      - "migrations/**"
-      - "index.html"
       - "biome.json"
-      - "drizzle.config.ts"
       - "package.json"
-      - "package-lock.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - "tsconfig.json"
-      - "vite.config.ts"
-      - "wrangler.jsonc"
-      - "worker-configuration.d.ts"
       - ".github/workflows/deploy-cloudflare.yml"
   workflow_dispatch:
 
@@ -37,28 +30,38 @@ jobs:
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
-      - name: Apply D1 migrations
-        run: npm run db:migrate:remote
+      - name: Apply database migrations (Neon)
+        run: pnpm run db:migrate
 
-      - name: Deploy Worker
-        run: npx wrangler deploy
+      - name: Deploy API Worker
+        run: pnpm --filter @istudarne/api deploy
+
+      - name: Deploy Web (React Router SSR Worker)
+        # Bake the API origin into the client/SSR build via VITE_API_BASE.
+        env:
+          VITE_API_BASE: ${{ vars.API_BASE_URL }}
+        run: pnpm --filter @istudarne/web deploy

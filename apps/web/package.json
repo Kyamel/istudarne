@@ -1,0 +1,44 @@
+{
+	"name": "@istudarne/web",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "react-router dev",
+		"build": "react-router build",
+		"preview": "vite preview",
+		"deploy": "react-router build && wrangler deploy",
+		"typegen": "wrangler types && react-router typegen",
+		"check": "wrangler types && react-router typegen && tsc --noEmit",
+		"format": "biome format --write .",
+		"lint": "biome lint .",
+		"biome:check": "biome check --write ."
+	},
+	"dependencies": {
+		"@istudarne/api": "workspace:*",
+		"@istudarne/contracts": "workspace:*",
+		"@istudarne/utils": "workspace:*",
+		"better-auth": "~1.6.23",
+		"clsx": "^2.1.1",
+		"hono": "^4.7.11",
+		"isbot": "^5.2.0",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0",
+		"react-router": "^8.0.0",
+		"tailwind-merge": "^3.6.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@cloudflare/vite-plugin": "^1.44.0",
+		"@cloudflare/workers-types": "^4.20250616.0",
+		"@inlang/paraglide-js": "^2.19.0",
+		"@react-router/dev": "^8.0.0",
+		"@tailwindcss/vite": "^4.3.2",
+		"@types/react": "^19.1.8",
+		"@types/react-dom": "^19.1.6",
+		"tailwindcss": "^4.3.2",
+		"typescript": "^5.8.3",
+		"vite": "8.0.16",
+		"wrangler": "^4.110.0"
+	}
+}

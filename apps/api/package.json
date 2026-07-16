@@ -1,0 +1,43 @@
+{
+	"name": "@istudarne/api",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./worker/index.ts",
+		"./routes": {
+			"types": "./types/rpc.d.ts",
+			"default": "./worker/routes/index.ts"
+		}
+	},
+	"scripts": {
+		"dev": "./scripts/dev.sh",
+		"build": "wrangler deploy --dry-run --outdir dist",
+		"build:types": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+		"prepare": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+		"deploy": "wrangler deploy",
+		"typegen": "wrangler types",
+		"check": "tsc --noEmit",
+		"format": "biome format --write .",
+		"lint": "biome lint .",
+		"biome:check": "biome check --write ."
+	},
+	"dependencies": {
+		"@hono/swagger-ui": "^0.6.1",
+		"@hono/zod-openapi": "^1.4.0",
+		"@istudarne/auth": "workspace:*",
+		"@istudarne/contracts": "workspace:*",
+		"@istudarne/database": "workspace:*",
+		"better-auth": "~1.6.23",
+		"drizzle-orm": "^0.45.2",
+		"hono": "^4.7.11",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250616.0",
+		"@types/node": "^24",
+		"tsc-alias": "^1.8.10",
+		"typescript": "^5.8.3",
+		"wrangler": "^4.20.5"
+	}
+}

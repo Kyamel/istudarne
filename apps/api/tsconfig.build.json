@@ -1,0 +1,16 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": false,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		// Workspace deps resolve through their own emitted .d.ts, not sources
+		// outside this package's rootDir (which would break the declaration emit).
+		"allowJs": false,
+		"baseUrl": ".",
+		"rootDir": ".",
+		"outDir": "dist/types",
+		"incremental": true,
+		"tsBuildInfoFile": "dist/types/.tsbuildinfo"
+	}
+}

@@ -1,0 +1,16 @@
+# Local development secrets. Copy to .dev.vars (gitignored) and fill in.
+# In production, set each one with: wrangler secret put <NAME>
+
+# Required: signs Better Auth sessions/tokens. Generate with: openssl rand -base64 32
+BETTER_AUTH_SECRET="dev-only-secret-change-me"
+
+# Optional: Resend API key (https://resend.com). When empty, verification,
+# password-reset and new-device emails are not sent — the link is logged to the
+# console instead (see @istudarne/auth's console sender).
+RESEND_API_KEY=""
+
+# Optional: OpenAI API key for the async AI jobs (queue consumer).
+OPENAI_API_KEY=""
+
+# Required: Neon Postgres connection string.
+DATABASE_URL="postgres://user:password@host/db?sslmode=require"

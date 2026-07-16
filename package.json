@@ -2,53 +2,23 @@
 	"name": "istudarne",
 	"private": true,
 	"type": "module",
+	"packageManager": "pnpm@11.11.0",
 	"scripts": {
-		"predev": "npm run rpc:types",
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite preview",
-		"deploy": "npm run build && wrangler deploy",
-		"i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./shared/paraglide --strategy localStorage preferredLanguage baseLocale --emit-ts-declarations --silent",
-		"rpc:types": "tsc -p tsconfig.rpc.json",
-		"rpc:types:watch": "tsc -p tsconfig.rpc.json --watch --preserveWatchOutput",
-		"typecheck": "npm run i18n:compile && npm run rpc:types && tsc --noEmit",
-		"format": "biome format --write .",
-		"lint": "biome lint .",
-		"check": "biome check --write .",
-		"db:generate": "drizzle-kit generate",
-		"db:migrate:local": "wrangler d1 migrations apply istudarne-db --local",
-		"db:migrate:remote": "wrangler d1 migrations apply istudarne-db --remote"
-	},
-	"dependencies": {
-		"@hono/swagger-ui": "^0.6.1",
-		"@hono/zod-openapi": "^1.4.0",
-		"@inlang/paraglide-js": "^2.19.0",
-		"clsx": "^2.1.1",
-		"drizzle-orm": "^0.45.2",
-		"hono": "^4.7.11",
-		"react": "^19.1.0",
-		"react-dom": "^19.1.0",
-		"react-router-dom": "^7.6.2",
-		"tailwind-merge": "^3.6.0",
-		"zod": "^4.4.3"
+		"i18n:compile": "paraglide-js compile --project ./apps/web/project.inlang --outdir ./packages/utils/paraglide --strategy localStorage preferredLanguage baseLocale --emit-ts-declarations --silent",
+		"typecheck": "pnpm run i18n:compile && pnpm --filter @istudarne/api build:types && pnpm -r check",
+		"build": "pnpm run i18n:compile && pnpm --filter @istudarne/api build:types && pnpm -r build",
+		"dev:api": "pnpm --filter @istudarne/api dev",
+		"dev:web": "pnpm --filter @istudarne/web dev",
+		"format": "pnpm --filter @istudarne/api format && pnpm --filter @istudarne/web format",
+		"lint": "pnpm --filter @istudarne/api lint && pnpm --filter @istudarne/web lint",
+		"check": "pnpm --filter @istudarne/api biome:check && pnpm --filter @istudarne/web biome:check",
+		"db:generate": "pnpm --filter @istudarne/database db:generate",
+		"db:migrate": "pnpm --filter @istudarne/database db:migrate",
+		"db:studio": "pnpm --filter @istudarne/database db:studio"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.0",
-		"@cloudflare/vite-plugin": "^1.7.4",
-		"@cloudflare/workers-types": "^4.20250616.0",
-		"@tailwindcss/vite": "^4.3.2",
-		"@types/node": "^24.0.3",
-		"@types/react": "^19.1.8",
-		"@types/react-dom": "^19.1.6",
-		"@vitejs/plugin-react": "^6.0.2",
-		"drizzle-kit": "^0.31.1",
-		"tailwindcss": "^4.3.2",
-		"typescript": "^5.8.3",
-		"vite": "^8.0.16",
-		"wrangler": "^4.20.5"
-	},
-	"overrides": {
-		"esbuild": "0.28.1",
-		"ws": "8.21.0"
+		"@inlang/paraglide-js": "^2.21.0",
+		"typescript": "^5.9.3"
 	}
 }

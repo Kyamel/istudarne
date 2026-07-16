@@ -1,0 +1,73 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "istudarne-api",
+	"main": "./worker/index.ts",
+	"compatibility_date": "2026-06-16",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": {
+		"enabled": true
+	},
+	/* Non-secret configuration. Secrets (BETTER_AUTH_SECRET, RESEND_API_KEY,
+	   OPENAI_API_KEY, DATABASE_URL) are set with `wrangler secret put` and,
+	   locally, in `.dev.vars` (see .dev.vars.example). */
+	"vars": {
+		"EMAIL_FROM": "Istudarne <no-reply@istudarne.com>",
+		"ALLOWED_ORIGINS": "capacitor://localhost,http://localhost:5173,http://localhost:5174,http://localhost:5175",
+		"OPENAI_MODEL": "gpt-4o-mini",
+		// Better Auth base URL (this API's public origin) — used to build email
+		// action links and scope session cookies. Override with the deployed API
+		// origin in production. Dev value matches scripts/dev.sh (--port 8787).
+		"AUTH_BASE_URL": "http://localhost:8787"
+	},
+	/* Cloudflare rate-limiting bindings (per-colo counters, keyed in code by
+	   client IP + path). namespace_id is an arbitrary unique number per limiter. */
+	"ratelimits": [
+		{
+			"name": "AUTH_RATE_LIMITER",
+			"namespace_id": "1001",
+			"simple": { "limit": 10, "period": 60 }
+		},
+		{
+			"name": "AI_RATE_LIMITER",
+			"namespace_id": "1002",
+			"simple": { "limit": 5, "period": 60 }
+		}
+	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "AI_QUEUE",
+				"queue": "istudarne-ai-jobs"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "istudarne-ai-jobs",
+				"max_batch_size": 5,
+				"max_batch_timeout": 5,
+				// Keep in sync with MAX_ATTEMPTS in worker/queue/aiJobs.ts.
+				"max_retries": 3
+			}
+		]
+	},
+	"r2_buckets": [
+		{
+			"binding": "QUIZ_FILES",
+			"bucket_name": "istudarne-quiz-files"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "STUDY_GROUP_CHAT",
+				"class_name": "StudyGroupChat"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["StudyGroupChat"]
+		}
+	]
+}

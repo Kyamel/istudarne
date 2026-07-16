@@ -19,3 +19,5 @@ project.inlang/cache/
 
 # Precompiled RPC route types (npm run rpc:types)
 .rpc/
+.react-router/
+build/

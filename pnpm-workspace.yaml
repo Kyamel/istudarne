@@ -1,0 +1,17 @@
+packages:
+  - apps/*
+  - packages/*
+
+overrides:
+  esbuild: 0.28.1
+  ws: 8.21.0
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: true
