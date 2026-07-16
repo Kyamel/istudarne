@@ -1,4 +1,16 @@
+import { getAuthOpenAPISchema, type Auth } from "@istudarne/auth";
 import { z } from "@hono/zod-openapi";
+
+type OpenAPIRecord = Record<string, unknown>;
+
+type OpenAPIDocument = OpenAPIRecord & {
+	paths?: Record<string, unknown>;
+	components?: OpenAPIRecord & {
+		schemas?: Record<string, unknown>;
+		securitySchemes?: Record<string, unknown>;
+	};
+	tags?: unknown[];
+};
 
 /* ------------------------------ shared pieces ------------------------------ */
 
@@ -81,3 +93,142 @@ export const openApiDocument = {
 		},
 	],
 };
+
+export async function mergeAuthOpenApiDocument(
+	appDocumentInput: object,
+	auth: Auth,
+): Promise<OpenAPIDocument> {
+	const appDocument = appDocumentInput as OpenAPIDocument;
+	const authDocument = await getAuthOpenAPISchema(auth);
+	const schemaNameMap = createSchemaNameMap(Object.keys(authDocument.components.schemas));
+
+	return {
+		...appDocument,
+		paths: {
+			...(appDocument.paths ?? {}),
+			...prefixAuthPaths(authDocument.paths, schemaNameMap),
+		},
+		components: {
+			...(appDocument.components ?? {}),
+			schemas: {
+				...(appDocument.components?.schemas ?? {}),
+				...prefixAuthSchemas(authDocument.components.schemas, schemaNameMap),
+			},
+			securitySchemes: {
+				...(appDocument.components?.securitySchemes ?? {}),
+				BearerAuth: {
+					type: "http",
+					scheme: "bearer",
+					description: "Better Auth bearer token from the sign-in response (native apps).",
+				},
+				CookieAuth: {
+					type: "apiKey",
+					in: "cookie",
+					name: "better-auth.session_token",
+					description: "Better Auth session cookie set on sign-in (web app).",
+				},
+			},
+		},
+		tags: mergeTags(appDocument.tags, [
+			{ name: "Auth", description: "Better Auth account, session, and password endpoints." },
+		]),
+	};
+}
+
+function createSchemaNameMap(names: string[]): Record<string, string> {
+	return Object.fromEntries(names.map((name) => [name, `Auth${name}`]));
+}
+
+function prefixAuthPaths(
+	paths: Record<string, unknown>,
+	schemaNameMap: Record<string, string>,
+): Record<string, unknown> {
+	return Object.fromEntries(
+		Object.entries(paths).map(([path, pathItem]) => [
+			`/api/auth${path}`,
+			rewriteAuthOpenApiValue(pathItem, schemaNameMap),
+		]),
+	);
+}
+
+function prefixAuthSchemas(
+	schemas: Record<string, unknown>,
+	schemaNameMap: Record<string, string>,
+): Record<string, unknown> {
+	return Object.fromEntries(
+		Object.entries(schemas).map(([name, schema]) => [
+			schemaNameMap[name] ?? name,
+			rewriteAuthOpenApiValue(schema, schemaNameMap),
+		]),
+	);
+}
+
+function rewriteAuthOpenApiValue(value: unknown, schemaNameMap: Record<string, string>): unknown {
+	if (Array.isArray(value)) {
+		return value.map((entry) => rewriteAuthOpenApiValue(entry, schemaNameMap));
+	}
+	if (!isRecord(value)) {
+		return value;
+	}
+
+	const rewritten: OpenAPIRecord = {};
+	for (const [key, entry] of Object.entries(value)) {
+		if (key === "$ref" && typeof entry === "string") {
+			rewritten[key] = rewriteSchemaRef(entry, schemaNameMap);
+			continue;
+		}
+		if (key === "security") {
+			rewritten[key] = rewriteAuthSecurity(entry);
+			continue;
+		}
+		if (key === "tags" && isStringArray(entry)) {
+			rewritten[key] = ["Auth"];
+			continue;
+		}
+		rewritten[key] = rewriteAuthOpenApiValue(entry, schemaNameMap);
+	}
+	return rewritten;
+}
+
+function rewriteSchemaRef(ref: string, schemaNameMap: Record<string, string>): string {
+	const schemaPrefix = "#/components/schemas/";
+	if (!ref.startsWith(schemaPrefix)) return ref;
+
+	const schemaName = ref.slice(schemaPrefix.length);
+	return `${schemaPrefix}${schemaNameMap[schemaName] ?? schemaName}`;
+}
+
+function rewriteAuthSecurity(value: unknown): unknown {
+	if (!Array.isArray(value)) return value;
+
+	return value.map((entry) => {
+		if (!isRecord(entry)) return entry;
+
+		return Object.fromEntries(
+			Object.entries(entry).map(([scheme, scopes]) => [
+				scheme === "bearerAuth" ? "BearerAuth" : scheme === "apiKeyCookie" ? "CookieAuth" : scheme,
+				scopes,
+			]),
+		);
+	});
+}
+
+function mergeTags(existing: unknown[] | undefined, additional: OpenAPIRecord[]): OpenAPIRecord[] {
+	const tags = [...((existing ?? []).filter(isRecord) as OpenAPIRecord[]), ...additional];
+	const seen = new Set<string>();
+
+	return tags.filter((tag) => {
+		const name = tag.name;
+		if (typeof name !== "string" || seen.has(name)) return false;
+		seen.add(name);
+		return true;
+	});
+}
+
+function isRecord(value: unknown): value is OpenAPIRecord {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}

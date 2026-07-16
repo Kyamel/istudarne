@@ -13,3 +13,4 @@ export {
 	type AuthNewDeviceEmail,
 } from "./emails";
 export { describeDevice, sameDevice } from "./device";
+export { getAuthOpenAPISchema, type AuthOpenAPISchema } from "./openapi";

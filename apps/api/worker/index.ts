@@ -15,7 +15,7 @@ import type { HonoEnv } from "./env";
 import { handleError } from "./http/errorHandler";
 import { diMiddleware } from "./middleware/di";
 import { rateLimitBy } from "./middleware/rateLimit";
-import { openApiDocument } from "./openapi";
+import { mergeAuthOpenApiDocument, openApiDocument } from "./openapi";
 import { handleAiJobsBatch } from "./queue/aiJobs";
 import { registerApiRoutes } from "./routes";
 
@@ -183,8 +183,12 @@ app.get("/docs", swaggerUI({ url: "/openapi.json" }));
 app.get("/docs/", swaggerUI({ url: "/openapi.json" }));
 app.get("/api/docs", swaggerUI({ url: "/openapi.json" }));
 app.get("/api/docs/", swaggerUI({ url: "/openapi.json" }));
-app.doc("/openapi.json", openApiDocument);
-app.doc("/api/openapi.json", openApiDocument);
+app.get("/openapi.json", async (c) =>
+	c.json(await mergeAuthOpenApiDocument(app.getOpenAPIDocument(openApiDocument), createAuth(c.env))),
+);
+app.get("/api/openapi.json", async (c) =>
+	c.json(await mergeAuthOpenApiDocument(app.getOpenAPIDocument(openApiDocument), createAuth(c.env))),
+);
 
 /* Machine-readable entry point for AI agents and RAG pipelines (llms.txt
    convention). Points to the OpenAPI spec and the quiz export endpoints. */
