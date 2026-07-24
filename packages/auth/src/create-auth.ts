@@ -91,6 +91,16 @@ export function createAuth(config: CreateAuthConfig) {
       }
     },
 
+    // Cloudflare sets `cf-connecting-ip` at the edge and overwrites any
+    // client-supplied value, so it is the only trustworthy client IP here.
+    // Deliberately NOT listing `x-forwarded-for`: it is caller-settable and
+    // would let anyone forge an address to evade rate limiting.
+    advanced: {
+      ipAddress: {
+        ipAddressHeaders: ['cf-connecting-ip']
+      }
+    },
+
     databaseHooks: {
       ...config.databaseHooks,
       session: {

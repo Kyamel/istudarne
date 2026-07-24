@@ -16,8 +16,7 @@ import { createAuthEmailSender } from "./email";
  * Host wiring for the self-contained `@istudarne/auth` module: it builds the
  * Better Auth instance from the request env, plugging in the Drizzle adapter,
  * the Resend email sender, and a `user.create` hook that provisions the domain
- * profile (`users`) whenever Better Auth creates an auth user. The instance is
- * cached across requests keyed by the config it depends on.
+ * profile (`users`) whenever Better Auth creates an auth user.
  */
 type AuthInstance = ReturnType<typeof createAuthModule>;
 type Session = Awaited<ReturnType<AuthInstance["api"]["getSession"]>>;
@@ -26,8 +25,7 @@ export type SessionUser = NonNullable<Session>["user"];
 export type SessionData = NonNullable<Session>["session"];
 export type DomainUser = typeof users.$inferSelect;
 
-let cachedAuth: AuthInstance | undefined;
-let cachedKey: string | undefined;
+const databaseByAuth = new WeakMap<object, ReturnType<typeof createDatabase>>();
 
 const LOCAL_DEV_ORIGINS = Array.from({ length: 8 }, (_, index) => index + 5173).flatMap((port) => [
 	`http://localhost:${port}`,
@@ -56,22 +54,10 @@ function parseOrigins(value: string | undefined, authBaseURL: string): string[] 
 	return Array.from(new Set(origins));
 }
 
-export function createAuth(env: Env): AuthInstance {
-	const key = [
-		env.AUTH_BASE_URL,
-		databaseUrl(env),
-		databaseDriver(env) ?? "",
-		env.BETTER_AUTH_SECRET,
-		env.ALLOWED_ORIGINS ?? "",
-	].join("\0");
-
-	if (cachedAuth && cachedKey === key) {
-		return cachedAuth;
-	}
-
+export function createAuth(env: CloudflareBindings): AuthInstance {
 	const db = createDatabase(databaseUrl(env), { driver: databaseDriver(env) });
 
-	cachedAuth = createAuthModule({
+	const auth = createAuthModule({
 		baseURL: env.AUTH_BASE_URL,
 		basePath: "/api/auth",
 		secret: env.BETTER_AUTH_SECRET,
@@ -112,17 +98,21 @@ export function createAuth(env: Env): AuthInstance {
 			},
 		},
 	});
-	cachedKey = key;
+	databaseByAuth.set(auth, db);
 
-	return cachedAuth;
+	return auth;
 }
 
-function databaseDriver(env: Env): DatabaseDriver | undefined {
-	return (env as Env & { DATABASE_DRIVER?: DatabaseDriver }).DATABASE_DRIVER;
+export function authDatabase(auth: AuthInstance) {
+	return databaseByAuth.get(auth);
 }
 
-function databaseUrl(env: Env): string {
-	return (env as Env & { DATABASE_URL: string }).DATABASE_URL;
+function databaseDriver(env: CloudflareBindings): DatabaseDriver | undefined {
+	return (env as CloudflareBindings & { DATABASE_DRIVER?: DatabaseDriver }).DATABASE_DRIVER;
+}
+
+function databaseUrl(env: CloudflareBindings): string {
+	return (env as CloudflareBindings & { DATABASE_URL: string }).DATABASE_URL;
 }
 
 function createInitialDisplayName(

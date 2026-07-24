@@ -12,7 +12,7 @@ export class StudyGroupChat implements DurableObject {
 	private sessions = new Set<ChatSession>();
 	private readonly groups: GroupRepository;
 
-	constructor(_state: DurableObjectState, env: Env) {
+	constructor(_state: DurableObjectState, env: CloudflareBindings) {
 		this.groups = createContainer(env).repositories.groups;
 	}
 

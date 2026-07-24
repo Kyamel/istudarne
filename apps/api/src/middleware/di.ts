@@ -1,5 +1,5 @@
 import type { HonoEnv } from "@api/env";
-import { createContainer } from "@api/server/container";
+import { createContainer, disposeContainer } from "@api/server/container";
 import type { MiddlewareHandler } from "hono";
 
 /**
@@ -7,6 +7,12 @@ import type { MiddlewareHandler } from "hono";
  * User resolution lives in the auth middleware.
  */
 export const diMiddleware: MiddlewareHandler<HonoEnv> = async (c, next) => {
-	c.set("container", createContainer(c.env));
-	await next();
+	const container = createContainer(c.env);
+	c.set("container", container);
+
+	try {
+		await next();
+	} finally {
+		c.executionCtx.waitUntil(disposeContainer(container));
+	}
 };

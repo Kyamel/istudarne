@@ -3,7 +3,7 @@ import type { Container } from "@api/server/container";
 import type { OpenAPIHono } from "@hono/zod-openapi";
 
 export type HonoEnv = {
-	Bindings: Env;
+	Bindings: CloudflareBindings;
 	Variables: {
 		container: Container;
 		/** Better Auth identity (email/verification), or null when anonymous. */

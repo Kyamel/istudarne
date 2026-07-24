@@ -10,7 +10,10 @@ const MAX_ATTEMPTS = 3;
  * multi-second OpenAI latency never blocks a user request; the await time is
  * I/O and does not count against the Workers CPU budget.
  */
-export async function handleAiJobsBatch(batch: MessageBatch<AiJobMessage>, env: Env) {
+export async function handleAiJobsBatch(
+	batch: MessageBatch<AiJobMessage>,
+	env: CloudflareBindings,
+) {
 	const { aiJobs, storage } = createContainer(env);
 
 	for (const message of batch.messages) {

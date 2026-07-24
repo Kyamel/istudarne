@@ -10,7 +10,7 @@ import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
-import { createAuth } from "./auth";
+import { authDatabase, createAuth } from "./auth";
 import type { HonoEnv } from "./env";
 import { handleError } from "./http/errorHandler";
 import { diMiddleware } from "./middleware/di";
@@ -19,6 +19,7 @@ import { mergeAuthOpenApiDocument, openApiDocument } from "./openapi";
 import { handleAiJobsBatch } from "./queue/aiJobs";
 import { registerApiRoutes } from "./routes";
 import { SCALAR_CDN_URL } from "./scalar-asset";
+import { closeDatabase } from "./server/db/client";
 
 const app = new OpenAPIHono<HonoEnv>({
 	/* Turns zod validation failures into the same `{ error }` JSON shape used
@@ -53,6 +54,22 @@ function isLocalURL(value: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+function headersWithLocalClientIp(request: Request): Headers {
+	if (!isLocalURL(request.url) || request.headers.has("cf-connecting-ip")) {
+		return request.headers;
+	}
+
+	const headers = new Headers(request.headers);
+	const forwardedFor = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+	headers.set("cf-connecting-ip", forwardedFor || "127.0.0.1");
+	return headers;
+}
+
+function requestWithLocalClientIp(request: Request): Request {
+	const headers = headersWithLocalClientIp(request);
+	return headers === request.headers ? request : new Request(request, { headers });
 }
 
 /* WebSocket upgrade responses have immutable headers; middleware that mutates
@@ -140,12 +157,21 @@ app.use(
 	rateLimitBy((env) => env.AI_RATE_LIMITER),
 );
 
-app.use("/api/*", diMiddleware);
-
 /* Better Auth owns everything under /api/auth/* (sign-in, sign-up, verification,
    password reset, session listing/revocation). Mounted before the app routes so
    its handler terminates those requests. Documented at /api/auth/reference. */
-app.all("/api/auth/*", (c) => createAuth(c.env).handler(c.req.raw));
+app.all("/api/auth/*", async (c) => {
+	const auth = createAuth(c.env);
+
+	try {
+		return await auth.handler(requestWithLocalClientIp(c.req.raw));
+	} finally {
+		const db = authDatabase(auth);
+		if (db) c.executionCtx.waitUntil(closeDatabase(db));
+	}
+});
+
+app.use("/api/*", diMiddleware);
 
 /* Resolves the Better Auth session (cookie or Bearer) and the linked domain
    profile into the request context for the application routes. Skips /api/auth/*
@@ -153,7 +179,11 @@ app.all("/api/auth/*", (c) => createAuth(c.env).handler(c.req.raw));
 app.use("/api/*", async (c, next) => {
 	if (c.req.path.startsWith("/api/auth/")) return next();
 
-	const session = await createAuth(c.env).api.getSession({ headers: c.req.raw.headers });
+	const auth = createAuth(c.env);
+	const session = await auth.api.getSession({ headers: headersWithLocalClientIp(c.req.raw) });
+	const authDb = authDatabase(auth);
+	if (authDb) c.executionCtx.waitUntil(closeDatabase(authDb));
+
 	c.set("authUser", session?.user ?? null);
 	c.set("session", session?.session ?? null);
 	c.set(

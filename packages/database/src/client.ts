@@ -19,6 +19,10 @@ const REMOTE_DRIVER: Exclude<DatabaseDriver, "auto"> = "neon-http";
 
 export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
 
+type DisposablePool = { end: () => Promise<void> };
+
+const poolByInstance = new WeakMap<object, DisposablePool>();
+
 /**
  * Opens the Drizzle connection. Local Postgres URLs use node-postgres; remote
  * URLs keep the stateless Neon HTTP driver unless DATABASE_DRIVER overrides it.
@@ -36,15 +40,31 @@ export function createDatabase(
 			idleTimeoutMillis: 10_000,
 			allowExitOnIdle: true,
 		});
-		return drizzleNodePostgres(pool, { schema });
+		const db = drizzleNodePostgres(pool, { schema });
+		poolByInstance.set(db, pool);
+		return db;
 	}
 
 	if (driver === "neon-serverless") {
 		const pool = new NeonPool({ connectionString: databaseUrl, max: 1 });
-		return drizzleNeonServerless(pool, { schema });
+		const db = drizzleNeonServerless(pool, { schema });
+		poolByInstance.set(db, pool);
+		return db;
 	}
 
 	return drizzleNeonHttp(neon(databaseUrl), { schema });
+}
+
+/**
+ * Closes the socket-backed pool behind a Drizzle instance. Stateless Neon HTTP
+ * databases have no pool, so this is a no-op for them.
+ */
+export async function closeDatabase(db: object): Promise<void> {
+	const pool = poolByInstance.get(db);
+	if (!pool) return;
+
+	poolByInstance.delete(db);
+	await pool.end();
 }
 
 export function resolveDatabaseDriver(
@@ -53,7 +73,7 @@ export function resolveDatabaseDriver(
 ): Exclude<DatabaseDriver, "auto"> {
 	if (requested !== "auto") return requested;
 
-	const envDriver = process.env.DATABASE_DRIVER;
+	const envDriver = process.env.DATABASE_DRIVER as string | undefined;
 	if (isDatabaseDriver(envDriver) && envDriver !== "auto") {
 		return envDriver;
 	}

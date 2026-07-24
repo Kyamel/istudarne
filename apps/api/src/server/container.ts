@@ -1,4 +1,4 @@
-import { createDatabase, type DatabaseDriver } from "./db/client";
+import { closeDatabase, createDatabase, type DatabaseDriver } from "./db/client";
 import { createRepositories } from "./repositories";
 import { createAiJobRepository } from "./repositories/aiJobRepository";
 import { createStorageRepository } from "./repositories/storageRepository";
@@ -14,7 +14,7 @@ import { createQuizService } from "./services/quizService";
  * not recreate the connection. Authentication is handled by the Better Auth
  * instance (src/auth.ts), not through this container.
  */
-export function createContainer(env: Env) {
+export function createContainer(env: CloudflareBindings) {
 	const db = createDatabase(databaseUrl(env), { driver: databaseDriver(env) });
 	const repositories = createRepositories(db);
 	const aiJobs = createAiJobRepository(db);
@@ -33,10 +33,14 @@ export function createContainer(env: Env) {
 
 export type Container = ReturnType<typeof createContainer>;
 
-function databaseDriver(env: Env): DatabaseDriver | undefined {
-	return (env as Env & { DATABASE_DRIVER?: DatabaseDriver }).DATABASE_DRIVER;
+export async function disposeContainer(container: Container): Promise<void> {
+	await closeDatabase(container.db);
 }
 
-function databaseUrl(env: Env): string {
-	return (env as Env & { DATABASE_URL: string }).DATABASE_URL;
+function databaseDriver(env: CloudflareBindings): DatabaseDriver | undefined {
+	return (env as CloudflareBindings & { DATABASE_DRIVER?: DatabaseDriver }).DATABASE_DRIVER;
+}
+
+function databaseUrl(env: CloudflareBindings): string {
+	return (env as CloudflareBindings & { DATABASE_URL: string }).DATABASE_URL;
 }

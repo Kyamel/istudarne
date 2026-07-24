@@ -9,7 +9,7 @@ import type { MiddlewareHandler } from "hono";
  * on auth and paid AI endpoints.
  */
 export const rateLimitBy =
-	(pickLimiter: (env: Env) => RateLimit): MiddlewareHandler<HonoEnv> =>
+	(pickLimiter: (env: CloudflareBindings) => RateLimit): MiddlewareHandler<HonoEnv> =>
 	async (c, next) => {
 		const ip = c.req.header("CF-Connecting-IP") ?? "unknown";
 		const { success } = await pickLimiter(c.env).limit({
