@@ -1,4 +1,4 @@
-import { createDatabase } from "./db/client";
+import { createDatabase, type DatabaseDriver } from "./db/client";
 import { createRepositories } from "./repositories";
 import { createAiJobRepository } from "./repositories/aiJobRepository";
 import { createStorageRepository } from "./repositories/storageRepository";
@@ -15,7 +15,7 @@ import { createQuizService } from "./services/quizService";
  * instance (src/auth.ts), not through this container.
  */
 export function createContainer(env: Env) {
-	const db = createDatabase(env.DATABASE_URL);
+	const db = createDatabase(databaseUrl(env), { driver: databaseDriver(env) });
 	const repositories = createRepositories(db);
 	const aiJobs = createAiJobRepository(db);
 	const storage = createStorageRepository(env.QUIZ_FILES);
@@ -32,3 +32,11 @@ export function createContainer(env: Env) {
 }
 
 export type Container = ReturnType<typeof createContainer>;
+
+function databaseDriver(env: Env): DatabaseDriver | undefined {
+	return (env as Env & { DATABASE_DRIVER?: DatabaseDriver }).DATABASE_DRIVER;
+}
+
+function databaseUrl(env: Env): string {
+	return (env as Env & { DATABASE_URL: string }).DATABASE_URL;
+}

@@ -6,6 +6,7 @@ import {
 	authUser,
 	authVerification,
 	createDatabase,
+	type DatabaseDriver,
 	users,
 } from "@istudarne/database";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -58,7 +59,8 @@ function parseOrigins(value: string | undefined, authBaseURL: string): string[] 
 export function createAuth(env: Env): AuthInstance {
 	const key = [
 		env.AUTH_BASE_URL,
-		env.DATABASE_URL,
+		databaseUrl(env),
+		databaseDriver(env) ?? "",
 		env.BETTER_AUTH_SECRET,
 		env.ALLOWED_ORIGINS ?? "",
 	].join("\0");
@@ -67,7 +69,7 @@ export function createAuth(env: Env): AuthInstance {
 		return cachedAuth;
 	}
 
-	const db = createDatabase(env.DATABASE_URL);
+	const db = createDatabase(databaseUrl(env), { driver: databaseDriver(env) });
 
 	cachedAuth = createAuthModule({
 		baseURL: env.AUTH_BASE_URL,
@@ -113,6 +115,14 @@ export function createAuth(env: Env): AuthInstance {
 	cachedKey = key;
 
 	return cachedAuth;
+}
+
+function databaseDriver(env: Env): DatabaseDriver | undefined {
+	return (env as Env & { DATABASE_DRIVER?: DatabaseDriver }).DATABASE_DRIVER;
+}
+
+function databaseUrl(env: Env): string {
+	return (env as Env & { DATABASE_URL: string }).DATABASE_URL;
 }
 
 function createInitialDisplayName(

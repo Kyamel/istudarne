@@ -5,7 +5,7 @@
 BETTER_AUTH_SECRET="dev-only-secret-change-me"
 
 # Optional: Resend API key (https://resend.com). When empty, verification,
-# password-reset and new-device emails are not sent — the link is logged to the
+# password-reset and new-device emails are not sent, the link is logged to the
 # console instead (see @istudarne/auth's console sender).
 RESEND_API_KEY=""
 
@@ -14,3 +14,6 @@ OPENAI_API_KEY=""
 
 # Required: Neon Postgres connection string.
 DATABASE_URL="postgres://user:password@host/db?sslmode=require"
+
+# Optional: auto | node-postgres | neon-http | neon-serverless.
+DATABASE_DRIVER="auto"

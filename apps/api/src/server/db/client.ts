@@ -1,1 +1,1 @@
-export { createDatabase, type Database } from "@istudarne/database";
+export { createDatabase, type Database, type DatabaseDriver } from "@istudarne/database";
