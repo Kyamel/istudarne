@@ -17,9 +17,8 @@ from `GET /api/me`.
 2. Gate private routes with `useAuth().loading` and `useAuth().user`.
 3. Use `fetchWithAuth` in the Hono RPC client so app endpoints receive the same
    auth transport as Better Auth.
-4. Web uses Better Auth's httpOnly session cookie. Capacitor/native builds set
-   `VITE_API_BASE`; the client captures Better Auth's `set-auth-token` header
-   after sign-in and sends it back as `Authorization: Bearer`.
+4. Web uses Better Auth's httpOnly session cookie. Capacitor/native builds can
+   set `VITE_API_BASE` to call the deployed API origin.
 
 Registration posts to `/api/auth/sign-up/email`; login posts to
 `/api/auth/sign-in/email`; logout posts to `/api/auth/sign-out`; the current app

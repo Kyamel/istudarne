@@ -4,7 +4,7 @@
 import type { ApiRoutes } from "@istudarne/api/routes";
 import { hc } from "hono/client";
 /* Auth transport comes from the Better Auth client wrapper so every endpoint
-   gets cookies on web and Bearer on Capacitor/native builds. */
+   includes the Better Auth session cookie. */
 import { fetchWithAuth } from "../auth/client";
 import { API_BASE } from "./api-base";
 
@@ -19,8 +19,7 @@ export { API_BASE } from "./api-base";
  *     const { quizzes } = await res.json(); // typed as QuizSummary[]
  *   }
  *
- * Web auth is cookie-based (`credentials: "include"`); Capacitor/native builds
- * also attach the Better Auth bearer token captured from `set-auth-token`.
+ * Web auth is cookie-based (`credentials: "include"`).
  */
 export const rpc = hc<ApiRoutes>(API_BASE || "/", {
 	fetch: fetchWithAuth,

@@ -1,7 +1,4 @@
-import {
-	createAuth as createAuthModule,
-	DEFAULT_AUTH_POLICY,
-} from "@istudarne/auth";
+import { createAuth as createAuthModule, DEFAULT_AUTH_POLICY } from "@istudarne/auth";
 import {
 	authAccount,
 	authRateLimit,
@@ -127,14 +124,20 @@ function createInitialDisplayName(
 	return user.email?.split("@")[0]?.trim() || "New member";
 }
 
-function createInitialUsername(user: {
-	id: string;
-	name?: string | null;
-	email?: string | null;
-}, requested?: unknown): string {
+function createInitialUsername(
+	user: {
+		id: string;
+		name?: string | null;
+		email?: string | null;
+	},
+	requested?: unknown,
+): string {
 	const base =
 		normalizeUsernamePart(
-			(typeof requested === "string" && requested) || user.name || user.email?.split("@")[0] || "user",
+			(typeof requested === "string" && requested) ||
+				user.name ||
+				user.email?.split("@")[0] ||
+				"user",
 		) || "user";
 	const suffix = normalizeUsernamePart(user.id).slice(0, 10) || crypto.randomUUID().slice(0, 8);
 	return `${base}-${suffix}`;

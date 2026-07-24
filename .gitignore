@@ -13,9 +13,13 @@ dist/
 worker-configuration.d.ts.map
 
 # i18n: runtime gerado pelo Paraglide e cache do inlang
-app/paraglide/
+apps/web/paraglide/
+packages/utils/paraglide/
 .inlang/
 project.inlang/cache/
+
+# Generated Scalar browser bundle copied from @scalar/api-reference.
+apps/api/public/assets/scalar-*.js
 
 # Precompiled RPC route types (npm run rpc:types)
 .rpc/

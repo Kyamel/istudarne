@@ -1,0 +1,14 @@
+{
+	"comment": "Crawler for getting external data like enade questions for example.",
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ES2022",
+		"moduleResolution": "Bundler",
+		"strict": true,
+		"skipLibCheck": true,
+		"allowJs": true,
+		"checkJs": false,
+		"noEmit": true,
+		"types": []
+	},
+}

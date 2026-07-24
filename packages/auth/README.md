@@ -3,9 +3,8 @@
 Email/password auth for Hono/Workers apps, built as a thin, portable wrapper over
 [Better Auth](https://better-auth.com). It carries the full feature set of the
 hand-rolled `istudarne` / `visao-game` auth modules — register/login, email
-verification (as a policy), password reset, session listing/revocation, a
-new-device sign-in alert, and dual transport (httpOnly cookies +
-`Authorization: Bearer`) — but with Better Auth owning the crypto and sessions.
+verification (as a policy), password reset, session listing/revocation, and a
+new-device sign-in alert — but with Better Auth owning the crypto and sessions.
 
 ## What changed from the hand-rolled modules
 
@@ -34,8 +33,7 @@ database-backed sessions**, so all of that is gone:
 | `device.ts`      | `describeDevice` / `sameDevice` for the new-device sign-in alert.                 |
 | `index.ts`       | Public exports.                                                                  |
 
-Plugins enabled: `bearer` (native/mobile transport), `multiSession`, and
-`openAPI` (reference UI at `/api/auth/reference`).
+Plugin enabled: `openAPI` (merged into the API reference at `/docs`).
 
 ## Usage
 
@@ -85,9 +83,7 @@ app.use('/v1/*', async (c, next) => {
 });
 ```
 
-`getSession` accepts both transports: the httpOnly cookie **and**
-`Authorization: Bearer <token>` (the token is returned in the `set-auth-token`
-response header on sign-in).
+`getSession` uses the Better Auth httpOnly session cookie.
 
 ## The policy
 

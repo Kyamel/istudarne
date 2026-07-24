@@ -45,44 +45,18 @@ export class AuthError extends Error {
 }
 
 const AUTH_BASE_PATH = "/api/auth";
-const AUTH_TOKEN_STORAGE_KEY = "istudarne.authToken";
 
 function authOrigin() {
 	return API_BASE || undefined;
 }
 
-function storedBearerToken() {
-	if (typeof window === "undefined") return null;
-	return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-}
-
-function storeBearerToken(token: string | null) {
-	if (typeof window === "undefined") return;
-	if (token) {
-		window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
-	} else {
-		window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-	}
-}
-
-function rememberAuthToken(response: Response) {
-	const token = response.headers.get("set-auth-token");
-	if (token) storeBearerToken(token);
-}
-
-function withBearer(init: RequestInit | undefined): RequestInit {
+function withCredentials(init: RequestInit | undefined): RequestInit {
 	const headers = new Headers(init?.headers);
-	const token = storedBearerToken();
-	if (token && !headers.has("Authorization")) {
-		headers.set("Authorization", `Bearer ${token}`);
-	}
 	return { ...init, credentials: init?.credentials ?? "include", headers };
 }
 
 async function authFetch(input: RequestInfo | URL, init?: RequestInit) {
-	const response = await fetch(input, withBearer(init));
-	rememberAuthToken(response);
-	return response;
+	return fetch(input, withCredentials(init));
 }
 
 export const authClient = createAuthClient({
@@ -93,7 +67,9 @@ export const authClient = createAuthClient({
 	},
 });
 
-function authError(error: { message?: string; status?: number; statusText?: string } | null): AuthError {
+function authError(
+	error: { message?: string; status?: number; statusText?: string } | null,
+): AuthError {
 	return new AuthError(
 		error?.message || error?.statusText || "Authentication failed.",
 		error?.status ?? 500,
@@ -161,7 +137,6 @@ export async function login(input: LoginRequest) {
 
 export async function logout() {
 	const result = await authClient.signOut();
-	storeBearerToken(null);
 	if (result.error) throw authError(result.error);
 	return { ok: true as const };
 }

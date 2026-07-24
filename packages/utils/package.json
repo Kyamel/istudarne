@@ -4,6 +4,10 @@
 	"private": true,
 	"type": "module",
 	"exports": {
+		"./paraglide": {
+			"types": "./paraglide/messages.d.ts",
+			"default": "./paraglide/messages.js"
+		},
 		"./paraglide/*": {
 			"types": "./paraglide/*.d.ts",
 			"default": "./paraglide/*.js"

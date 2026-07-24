@@ -31,7 +31,8 @@
 	"devDependencies": {
 		"@cloudflare/vite-plugin": "^1.44.0",
 		"@cloudflare/workers-types": "^4.20250616.0",
-		"@inlang/paraglide-js": "^2.19.0",
+		"@inlang/paraglide-js": "^2.21.0",
+		"@inlang/plugin-message-format": "^4.4.0",
 		"@react-router/dev": "^8.0.0",
 		"@tailwindcss/vite": "^4.3.2",
 		"@types/react": "^19.1.8",

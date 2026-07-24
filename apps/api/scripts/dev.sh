@@ -9,5 +9,8 @@ if [ -z "$SSL_CERT_FILE" ] && [ -f "$ca" ]; then
 	export SSL_CERT_FILE="$ca"
 fi
 
+# Self-host the Scalar bundle into public/assets before serving.
+node "$(dirname "$0")/copy-scalar.mjs"
+
 export WRANGLER_LOG_PATH=.wrangler/logs
 exec wrangler dev --port 8787 "$@"

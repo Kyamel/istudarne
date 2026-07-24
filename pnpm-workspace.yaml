@@ -9,9 +9,11 @@ overrides:
 onlyBuiltDependencies:
   - esbuild
   - sharp
+  - vue-demi
   - workerd
 
 allowBuilds:
   esbuild: true
   sharp: true
+  vue-demi: true
   workerd: true

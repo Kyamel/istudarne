@@ -1,5 +1,5 @@
-import { getAuthOpenAPISchema, type Auth } from "@istudarne/auth";
 import { z } from "@hono/zod-openapi";
+import { type Auth, getAuthOpenAPISchema } from "@istudarne/auth";
 
 type OpenAPIRecord = Record<string, unknown>;
 
@@ -38,11 +38,8 @@ export const errorResponse = (description: string) => ({
 	content: { "application/json": { schema: ErrorResponseSchema } },
 });
 
-/**
- * Marks a route as authenticated in the OpenAPI document. Both transports are
- * accepted: `Authorization: Bearer` (native apps) or the access cookie (web).
- */
-export const authSecurity: Record<string, string[]>[] = [{ BearerAuth: [] }, { CookieAuth: [] }];
+/** Marks a route as authenticated in the OpenAPI document via the web session cookie. */
+export const authSecurity: Record<string, string[]>[] = [{ CookieAuth: [] }];
 
 /* ------------------------------ path params ------------------------------- */
 
@@ -83,8 +80,7 @@ export const openApiDocument = {
 		version: "0.2.0",
 		description:
 			"Istudarne serverless API for quizzes, JSON uploads, public search, community features, and async AI jobs. " +
-			"Authentication is handled by Better Auth with stateful Postgres sessions; " +
-			"web clients use httpOnly cookies, native clients use Bearer headers.",
+			"Authentication is handled by Better Auth with stateful Postgres sessions and httpOnly cookies.",
 	},
 	servers: [
 		{
@@ -116,11 +112,6 @@ export async function mergeAuthOpenApiDocument(
 			},
 			securitySchemes: {
 				...(appDocument.components?.securitySchemes ?? {}),
-				BearerAuth: {
-					type: "http",
-					scheme: "bearer",
-					description: "Better Auth bearer token from the sign-in response (native apps).",
-				},
 				CookieAuth: {
 					type: "apiKey",
 					in: "cookie",
@@ -206,7 +197,7 @@ function rewriteAuthSecurity(value: unknown): unknown {
 
 		return Object.fromEntries(
 			Object.entries(entry).map(([scheme, scopes]) => [
-				scheme === "bearerAuth" ? "BearerAuth" : scheme === "apiKeyCookie" ? "CookieAuth" : scheme,
+				scheme === "apiKeyCookie" ? "CookieAuth" : scheme,
 				scopes,
 			]),
 		);

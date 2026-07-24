@@ -1,6 +1,6 @@
 import { StudyGroupChat } from "@api/server/study-group-chat";
-import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
 import type { Context, MiddlewareHandler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -18,6 +18,7 @@ import { rateLimitBy } from "./middleware/rateLimit";
 import { mergeAuthOpenApiDocument, openApiDocument } from "./openapi";
 import { handleAiJobsBatch } from "./queue/aiJobs";
 import { registerApiRoutes } from "./routes";
+import { SCALAR_CDN_URL } from "./scalar-asset";
 
 const app = new OpenAPIHono<HonoEnv>({
 	/* Turns zod validation failures into the same `{ error }` JSON shape used
@@ -63,8 +64,8 @@ const unlessWebSocket =
 
 /* CSP for HTML pages (landing, share pages, and the SPA shell served by the
    assets binding). The /api stack keeps its own secureHeaders (JSON needs no
-   CSP), and /docs is excluded because Swagger UI loads assets from the
-   jsdelivr CDN. In dev, Vite injects an inline react-refresh preamble and HMR
+   CSP), and /docs is excluded because Scalar renders its own interactive HTML.
+   In dev, Vite injects an inline react-refresh preamble and HMR
    talks over a same-host ws connection, hence the relaxations. */
 const pageSecureHeaders = secureHeaders({
 	contentSecurityPolicy: {
@@ -105,15 +106,12 @@ app.use(
 	cors({
 		origin: (origin, c) => (isAllowedOrigin(origin, c as Context<HonoEnv>) ? origin : null),
 		credentials: true,
-		allowHeaders: ["Authorization", "Content-Type"],
-		exposeHeaders: ["set-auth-token"],
+		allowHeaders: ["Content-Type"],
 	}),
 );
-/* Blocks cross-origin form submissions that ride on the auth cookies. Bearer
-   requests are exempt: an Authorization header cannot be attached by a
-   cross-site form, so there is nothing to forge. */
+/* Blocks cross-origin form submissions that ride on the auth cookies. */
 const csrfProtection = csrf({ origin: isAllowedOrigin });
-app.use("/api/*", (c, next) => (c.req.header("Authorization") ? next() : csrfProtection(c, next)));
+app.use("/api/*", csrfProtection);
 app.use("/api/*", unlessWebSocket(secureHeaders()));
 app.use("/api/*", async (c, next) => {
 	if (c.req.method !== "GET") {
@@ -133,7 +131,10 @@ app.use(
    cors so CORS preflights are answered before consuming quota. The auth
    limiter throttles credential guessing and email spam; the AI limiter caps
    spend on the paid OpenAI-backed queue. */
-app.use("/api/auth/*", rateLimitBy((env) => env.AUTH_RATE_LIMITER));
+app.use(
+	"/api/auth/*",
+	rateLimitBy((env) => env.AUTH_RATE_LIMITER),
+);
 app.use(
 	"/api/ai/jobs",
 	rateLimitBy((env) => env.AI_RATE_LIMITER),
@@ -167,11 +168,6 @@ app.use("/api/*", async (c, next) => {
 
 /* ------------------------------ documentation ------------------------------ */
 
-app.openAPIRegistry.registerComponent("securitySchemes", "BearerAuth", {
-	type: "http",
-	scheme: "bearer",
-	description: "Better Auth bearer token from the sign-in response (native apps).",
-});
 app.openAPIRegistry.registerComponent("securitySchemes", "CookieAuth", {
 	type: "apiKey",
 	in: "cookie",
@@ -179,15 +175,26 @@ app.openAPIRegistry.registerComponent("securitySchemes", "CookieAuth", {
 	description: "Better Auth session cookie set on sign-in (web app).",
 });
 
-app.get("/docs", swaggerUI({ url: "/openapi.json" }));
-app.get("/docs/", swaggerUI({ url: "/openapi.json" }));
-app.get("/api/docs", swaggerUI({ url: "/openapi.json" }));
-app.get("/api/docs/", swaggerUI({ url: "/openapi.json" }));
+const scalarDocs = Scalar({
+	url: "/openapi.json",
+	cdn: SCALAR_CDN_URL,
+	pageTitle: "Istudarne API Reference",
+	theme: "default",
+});
+
+app.get("/docs", scalarDocs);
+app.get("/docs/", scalarDocs);
+app.get("/api/docs", scalarDocs);
+app.get("/api/docs/", scalarDocs);
 app.get("/openapi.json", async (c) =>
-	c.json(await mergeAuthOpenApiDocument(app.getOpenAPIDocument(openApiDocument), createAuth(c.env))),
+	c.json(
+		await mergeAuthOpenApiDocument(app.getOpenAPIDocument(openApiDocument), createAuth(c.env)),
+	),
 );
 app.get("/api/openapi.json", async (c) =>
-	c.json(await mergeAuthOpenApiDocument(app.getOpenAPIDocument(openApiDocument), createAuth(c.env))),
+	c.json(
+		await mergeAuthOpenApiDocument(app.getOpenAPIDocument(openApiDocument), createAuth(c.env)),
+	),
 );
 
 /* Machine-readable entry point for AI agents and RAG pipelines (llms.txt
@@ -203,7 +210,7 @@ app.get("/llms.txt", (c) => {
 ## API
 
 - [OpenAPI spec](${origin}/openapi.json): full REST API description
-- [API docs](${origin}/docs): interactive Swagger UI
+- [API docs](${origin}/docs): interactive Scalar API Reference
 
 ## Content for retrieval
 
